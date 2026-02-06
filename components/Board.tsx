@@ -2,6 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GAME_DATA_TRANSLATIONS } from '../constants/gameTranslations';
+import { Language, TRANSLATIONS } from '../constants/translations';
 import { BOARD_DATA } from '../game/board';
 import { CARD_CONFIG, CardAction } from '../game/CardConfig';
 import { Tile as TileType } from '../game/types';
@@ -53,6 +55,35 @@ interface PlayerState {
 }
 
 export default function Board() {
+    const [language, setLanguage] = useState<Language>('en');
+    const t = (section: string, key: string, params?: Record<string, string | number>) => {
+        let text = TRANSLATIONS[language][section]?.[key] || key;
+        if (params) {
+            Object.entries(params).forEach(([k, v]) => {
+                text = text.replace(`{${k}}`, v.toString());
+            });
+        }
+        return text;
+    };
+    const getTileName = (id: number) => GAME_DATA_TRANSLATIONS[language].tiles[id] || BOARD_DATA[id].name;
+
+    const getLocalizedCardData = (id: number) => {
+        const base = CARD_CONFIG[id];
+        const localized = GAME_DATA_TRANSLATIONS[language].cards?.[id];
+        if (!localized) return base;
+
+        return {
+            ...base,
+            title: localized.title,
+            story: localized.story,
+            choices: base.choices.map((c, i) => ({
+                ...c,
+                label: localized.choices[i] || c.label,
+                ui_feedback: localized.feedback[i] || c.ui_feedback
+            }))
+        };
+    };
+
     // Multiplayer State
     const [players, setPlayers] = useState<PlayerState[]>([]);
     const [turn, setTurn] = useState(0);
@@ -65,7 +96,7 @@ export default function Board() {
     const [currentTile, setCurrentTile] = useState<TileType>(BOARD_DATA[0]);
 
     // Setup State
-    const [setupStep, setSetupStep] = useState(0); // 0: Total, 1: Ratio, 2: Playing
+    const [setupStep, setSetupStep] = useState(0); // 0: Lang, 1: Players, 2: Ratio, 3: Playing
     const [totalPlayers, setTotalPlayers] = useState(2);
     const [humanCount, setHumanCount] = useState(2);
     const [botCount, setBotCount] = useState(0);
@@ -96,12 +127,36 @@ export default function Board() {
 
     const playerAnims = useRef<{ [key: number]: Animated.ValueXY }>({}).current;
     const playerScales = useRef<{ [key: number]: Animated.Value }>({}).current;
+    const isTurnEnding = useRef(false);
 
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
     const speak = (text: string) => {
+        if (!text) return;
         Speech.stop();
-        Speech.speak(text, { pitch: 1.0, rate: 0.9 });
+
+        // Clean text for TTS: Remove currency symbols and extra punctuation
+        let cleanText = text
+            .replace(/₹/g, ' rupees ')
+            .replace(/-/g, ' minus ')
+            .replace(/[!?.।]/g, ' ')
+            .trim();
+
+        const localeMap: Record<Language, string> = {
+            en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', bn: 'bn-IN',
+            te: 'te-IN', ta: 'ta-IN', gu: 'gu-IN', kn: 'kn-IN',
+            ml: 'ml-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN',
+            mai: 'hi-IN', bho: 'hi-IN', har: 'hi-IN', sat: 'hi-IN'
+        };
+
+        // Small delay to ensure stop() finishes
+        setTimeout(() => {
+            Speech.speak(cleanText, {
+                pitch: 1.0,
+                rate: 1.0,
+                language: localeMap[language] || 'en-IN'
+            });
+        }, 50);
     };
 
     const getPlayerCoordinates = (pos: number) => {
@@ -144,7 +199,7 @@ export default function Board() {
         if (isRolling || isMoving || hasRolled || activePlayer?.isOut || showCard) return;
         setIsRolling(true);
         setHasRolled(true);
-        speak("Rolling...");
+        speak(t('ui', 'rolling'));
 
         Animated.parallel([
             Animated.timing(diceAnim, { toValue: 1, duration: 800, easing: Easing.linear, useNativeDriver: true }),
@@ -170,7 +225,7 @@ export default function Board() {
 
         setIsRolling(false);
         setIsMoving(true);
-        speak(`${total}! Moving...`);
+        speak(t('ui', 'moving', { total }));
 
         for (let i = 1; i <= total; i++) {
             const stepPos = (startPos + i) % 40;
@@ -197,7 +252,7 @@ export default function Board() {
 
             if (stepPos === 0) {
                 setPlayers(prev => prev.map((p, idx) => idx === turn ? { ...p, money: p.money + 500 } : p));
-                speak("Passed Go! salary +500");
+                speak(t('ui', 'passedGo'));
             }
         }
 
@@ -205,7 +260,7 @@ export default function Board() {
         const tile = BOARD_DATA[endPos];
         setCurrentTile(tile);
         determineMiniGame(tile);
-        speak(`Landed on ${tile.name}`);
+        speak(`${t('ui', 'landedOn')} ${getTileName(endPos)}`);
 
         cardAnim.setValue(0);
         Animated.spring(cardAnim, { toValue: 1, friction: 5, tension: 40, useNativeDriver: true }).start();
@@ -213,6 +268,8 @@ export default function Board() {
         setTimeout(() => {
             setShowCard(true);
             setIsTaskMinimized(false);
+            const localizedCard = getLocalizedCardData(endPos);
+            speak(localizedCard.story);
         }, 500);
     };
 
@@ -246,7 +303,7 @@ export default function Board() {
             if (deductHeart) {
                 newHearts -= 1;
                 newMoney -= 500;
-                speak("Wrong answer! One heart lost and ₹500 penalty.");
+                speak(t('ui', 'wrongAnswer'));
             }
 
             const updatedPlayers = prev.map((p, idx) => idx === turn ? {
@@ -264,14 +321,14 @@ export default function Board() {
             } : p);
 
             if (newKnow >= 500 || (newMoney + newBank) >= 100000) {
-                speak(`Congratulations! ${currentP.name} has won the game!`);
+                speak(t('ui', 'win', { name: currentP.name }));
                 Alert.alert("🏆 VICTORY 🏆", `${currentP.name} has won!`);
                 return updatedPlayers;
             }
 
             if (newHearts <= 0) {
                 updatedPlayers[turn].isOut = true;
-                speak(`${currentP.name} has lost all hearts and is out of the game.`);
+                speak(t('ui', 'out', { name: currentP.name }));
                 Alert.alert("💔 GAME OVER 💔", `${currentP.name} has no hearts left and must retire.`, [{
                     text: "Exit", onPress: () => {
                         setPlayers(updatedPlayers);
@@ -282,7 +339,7 @@ export default function Board() {
             }
 
             if (newMoney + newBank <= 0) {
-                speak("You are out of funds! You need an emergency loan to continue.");
+                speak(t('ui', 'broke'));
                 Alert.alert("⚠️ BROKE ⚠️", "Your balance is zero. You must take a loan to continue in Econopolis.", [
                     {
                         text: "Ask for Loan", onPress: () => {
@@ -295,11 +352,11 @@ export default function Board() {
             }
 
             if (currentP.isBot) {
-                speak(msg || "Turn complete.");
+                speak(msg || t('ui', 'turnComplete'));
                 setTimeout(() => endTurn(), 2000);
             } else {
                 speak(msg);
-                Alert.alert("Result", msg, [{ text: "Done", onPress: () => endTurn() }]);
+                Alert.alert(t('ui', 'result') || "Result", msg, [{ text: t('ui', 'done') || "Done", onPress: () => endTurn() }]);
             }
 
             return updatedPlayers;
@@ -307,6 +364,9 @@ export default function Board() {
     };
 
     const endTurn = () => {
+        if (isTurnEnding.current) return;
+        isTurnEnding.current = true;
+
         setBotProgress(0);
         setBotTaskStatus(null);
         setPlayers(prev => prev.map(p => ({
@@ -329,7 +389,7 @@ export default function Board() {
             const activeRemaining = players.filter(p => !p.isOut);
             if (activeRemaining.length <= 1 && players.length > 1) {
                 const winner = activeRemaining[0] || players[0];
-                speak(`Game Over! ${winner.name} is the last one standing and has won!`);
+                speak(t('ui', 'gameOver', { name: winner.name }));
                 Alert.alert("🏁 GAME OVER 🏁", `${winner.name} has survived ECONOPOLIS and won by default!`);
                 return;
             }
@@ -345,6 +405,7 @@ export default function Board() {
             });
             setFocusedIndex(null);
             setShowLoanSelection(false);
+            isTurnEnding.current = false;
         }, 300);
     };
 
@@ -361,7 +422,7 @@ export default function Board() {
         } : p));
 
         setShowLoanSelection(false);
-        speak(`Loan of ₹${amount} received from ${lender}.`);
+        speak(t('ui', 'loanSuccess', { amount, lender }));
         Alert.alert("Loan Received", `₹${amount} added to your wallet. Remember to pay it back!`, [{ text: "Okay", onPress: () => endTurn() }]);
     };
 
@@ -405,10 +466,10 @@ export default function Board() {
             case 'trigger_quiz': setMiniGameType('QUIZ'); return;
             case 'validate_pin':
                 if (miniGameInput === "123456" || miniGameInput === "000000") {
-                    updateStats(-500, 0, -20, 0, "Weak PIN! Fined ₹500.", false, 0, true);
+                    updateStats(-500, 0, -20, 0, t('ui', 'weakPin'), false, 0, true);
                     return;
                 } else {
-                    updateStats(0, 20, 10, 5, "Strong PIN! Security +20");
+                    updateStats(0, 20, 10, 5, t('ui', 'strongPin'));
                     return;
                 }
             case 'lend_money': m = -500; newFlags['raju_loan'] = true; break;
@@ -512,7 +573,7 @@ export default function Board() {
     };
 
     const renderGeneric = () => {
-        const config = CARD_CONFIG[currentTile.id];
+        const config = getLocalizedCardData(currentTile.id);
         if (currentCardFeedback) {
             return (
                 <View style={styles.actionContainer}>
@@ -525,7 +586,7 @@ export default function Board() {
                             style={[styles.actionButton, { marginTop: 20, width: '100%' }]}
                             onPress={() => endTurn()}
                         >
-                            <Text style={styles.actionButtonText}>CLOSE RESULT</Text>
+                            <Text style={styles.actionButtonText}>{t('ui', 'close')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -547,7 +608,7 @@ export default function Board() {
                         >
                             <Text style={styles.actionButtonText}>
                                 {choice.label}
-                                {activePlayer?.isBot && botSelectedIndex === idx && " (Choosing...)"}
+                                {activePlayer?.isBot && botSelectedIndex === idx && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -558,7 +619,7 @@ export default function Board() {
             <View style={styles.actionContainer}>
                 <Text style={styles.modalDescription}>{currentTile.description || "Pass through the village safely."}</Text>
                 <TouchableOpacity style={styles.actionButton} onPress={() => endTurn()}>
-                    <Text style={styles.actionButtonText}>PROCEED</Text>
+                    <Text style={styles.actionButtonText}>{t('ui', 'done')}</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -566,13 +627,13 @@ export default function Board() {
 
     const renderLoanSelection = () => (
         <View style={styles.miniGameContainer}>
-            <Text style={styles.gameTitle}>CHOOSE A LENDER</Text>
+            <Text style={styles.gameTitle}>{t('miniGames', 'lenderTitle')}</Text>
             <TouchableOpacity
                 style={[styles.loanOption, { borderColor: '#3b82f6' }, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
                 onPress={() => handleTakeLoan('MICRO')}
             >
                 <Text style={styles.loanLender}>
-                    Micro-Credit {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                    {t('miniGames', 'micro')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                 </Text>
                 <MaterialCommunityIcons name="bank" size={24} color="#3b82f6" />
             </TouchableOpacity>
@@ -581,7 +642,7 @@ export default function Board() {
                 onPress={() => handleTakeLoan('NGO')}
             >
                 <Text style={styles.loanLender}>
-                    NGO Support {activePlayer?.isBot && botSelectedIndex === 1 && " (Choosing...)"}
+                    {t('miniGames', 'ngo')} {activePlayer?.isBot && botSelectedIndex === 1 && ` (${t('ui', 'choosing')})`}
                 </Text>
                 <MaterialCommunityIcons name="hand-heart" size={24} color="#10b981" />
             </TouchableOpacity>
@@ -590,35 +651,35 @@ export default function Board() {
                 onPress={() => handleTakeLoan('SHARK')}
             >
                 <Text style={styles.loanLender}>
-                    Moneylender {activePlayer?.isBot && botSelectedIndex === 2 && " (Choosing...)"}
+                    {t('miniGames', 'shark')} {activePlayer?.isBot && botSelectedIndex === 2 && ` (${t('ui', 'choosing')})`}
                 </Text>
                 <MaterialCommunityIcons name="skull-crossbones" size={24} color="#ef4444" />
             </TouchableOpacity>
             <TouchableOpacity style={{ marginTop: 20 }} onPress={() => setShowLoanSelection(false)}>
-                <Text style={{ color: '#94a3b8' }}>Cancel</Text>
+                <Text style={{ color: '#94a3b8' }}>{t('ui', 'close')}</Text>
             </TouchableOpacity>
         </View>
     );
 
     const renderMiniGame = () => {
-        const config = CARD_CONFIG[currentTile.id];
+        const config = getLocalizedCardData(currentTile.id);
         const storyText = config?.story || "Complete the task to proceed!";
 
         switch (miniGameType) {
             case 'KYC':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>VERIFY ID</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'kyc')}</Text>
                         <Text style={[styles.modalDescription, { marginBottom: 15 }]}>{storyText}</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
                             onPress={() => {
-                                if (currentTile.id === 17) updateStats(2000, 20, 0, 10, "Grant Approved! ₹2000 Credited.");
-                                else updateStats(0, 20, 0, 5, "KYC Verified!");
+                                if (currentTile.id === 17) updateStats(2000, 20, 0, 10, t('ui', 'kycFull'));
+                                else updateStats(0, 20, 0, 5, t('ui', 'kycBasic'));
                             }}
                         >
                             <Text style={styles.actionButtonText}>
-                                Scan PAN Card {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'scanID')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -626,22 +687,22 @@ export default function Board() {
             case 'UPI':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>SECURE YOUR UPI</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'upi')}</Text>
                         <Text style={[styles.modalDescription, { marginBottom: 15 }]}>{storyText}</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#ef4444' }, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
-                            onPress={() => updateStats(-500, 0, -20, 0, "Too Easy! Your account was hacked. -₹500.", false, 0, true)}
+                            onPress={() => updateStats(-500, 0, -20, 0, t('ui', 'upiFail'), false, 0, true)}
                         >
                             <Text style={styles.actionButtonText}>
-                                Set '1234' (Easy) {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'easyPIN')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.actionButton, { marginTop: 10, backgroundColor: '#10b981' }, activePlayer?.isBot && botSelectedIndex === 1 && styles.botHoverGlow]}
-                            onPress={() => updateStats(0, 20, 10, 5, "Strong PIN! Your digital wallet is safe.")}
+                            onPress={() => updateStats(0, 20, 10, 5, t('ui', 'upiSuccess'))}
                         >
                             <Text style={styles.actionButtonText}>
-                                Set '8739' (Strong) {activePlayer?.isBot && botSelectedIndex === 1 && " (Choosing...)"}
+                                {t('miniGames', 'strongPIN')} {activePlayer?.isBot && botSelectedIndex === 1 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -649,22 +710,22 @@ export default function Board() {
             case 'PHISHING':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={[styles.gameTitle, { color: '#ef4444' }]}>⚠️ SCAM ALERT</Text>
+                        <Text style={[styles.gameTitle, { color: '#ef4444' }]}>{t('miniGames', 'phishing')}</Text>
                         <Text style={[styles.modalDescription, { marginBottom: 15 }]}>{storyText}</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, { backgroundColor: '#ef4444' }, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
-                            onPress={() => updateStats(-1000, 0, -50, 0, "Scammed! You lost money to a con artist. -₹1000.", false, 0, true)}
+                            onPress={() => updateStats(-1000, 0, -50, 0, t('ui', 'phishingFail'), false, 0, true)}
                         >
                             <Text style={styles.actionButtonText}>
-                                Click Link & Verify {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'clickScan')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.actionButton, { marginTop: 10, backgroundColor: '#10b981' }, activePlayer?.isBot && botSelectedIndex === 1 && styles.botHoverGlow]}
-                            onPress={() => updateStats(0, 30, 0, 10, "Smart! You reported the scam to the bank.")}
+                            onPress={() => updateStats(0, 30, 0, 10, t('ui', 'phishingSuccess'))}
                         >
                             <Text style={styles.actionButtonText}>
-                                Block & Delete {activePlayer?.isBot && botSelectedIndex === 1 && " (Choosing...)"}
+                                {t('miniGames', 'blockScam')} {activePlayer?.isBot && botSelectedIndex === 1 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -679,29 +740,29 @@ export default function Board() {
                 const q = questions[qIdx];
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>VILLAGE QUIZ</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'quiz')}</Text>
                         <Text style={[styles.modalDescription, { marginBottom: 15 }]}>{storyText}</Text>
                         <Text style={[styles.modalDescription, { color: '#fff', fontSize: 16, marginBottom: 10 }]}>{q.q}</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
                             onPress={() => {
-                                if (q.correct === 'a') updateStats(500, 10, 0, 5, "Correct! Knowledge is power.");
-                                else updateStats(-200, 0, 0, 0, "Wrong! You lost ₹200 for the bad advice.", false, 0, true);
+                                if (q.correct === 'a') updateStats(500, 10, 0, 5, t('ui', 'quizCorrect'));
+                                else updateStats(-200, 0, 0, 0, t('ui', 'quizWrong'), false, 0, true);
                             }}
                         >
                             <Text style={styles.actionButtonText}>
-                                {q.a} {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {q.a} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.actionButton, { marginTop: 10 }, activePlayer?.isBot && botSelectedIndex === 1 && styles.botHoverGlow]}
                             onPress={() => {
-                                if (q.correct === 'b') updateStats(500, 10, 0, 5, "Correct! Knowledge is power.");
-                                else updateStats(-200, 0, 0, 0, "Wrong! You lost ₹200 for the bad advice.", false, 0, true);
+                                if (q.correct === 'b') updateStats(500, 10, 0, 5, t('ui', 'quizCorrect'));
+                                else updateStats(-200, 0, 0, 0, t('ui', 'quizWrong'), false, 0, true);
                             }}
                         >
                             <Text style={styles.actionButtonText}>
-                                {q.b} {activePlayer?.isBot && botSelectedIndex === 1 && " (Choosing...)"}
+                                {q.b} {activePlayer?.isBot && botSelectedIndex === 1 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -709,7 +770,7 @@ export default function Board() {
             case 'TAPPER':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>HAUL THE SACKS!</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'tapper')}</Text>
                         <Text style={styles.modalDescription}>Tap fast to move the harvest! ({tapCount}/10)</Text>
                         <View style={styles.botProgressBarBase}>
                             <View style={[styles.botProgressBarFill, { width: `${(tapCount / 10) * 100}%`, backgroundColor: '#10b981' }]} />
@@ -717,12 +778,12 @@ export default function Board() {
                         <TouchableOpacity
                             style={[styles.actionButton, { marginTop: 20 }, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
                             onPress={() => {
-                                if (tapCount >= 9) updateStats(1500, 10, 0, 5, "Hard work paid off! ₹1500 earned.");
+                                if (tapCount >= 9) updateStats(1500, 10, 0, 5, t('ui', 'tapperSuccess'));
                                 else setTapCount(prev => prev + 1);
                             }}
                         >
                             <Text style={styles.actionButtonText}>
-                                PUSH! {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'push')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -730,14 +791,14 @@ export default function Board() {
             case 'PIN_ATM':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>RD PIN SETUP</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'pinAtm')}</Text>
                         <Text style={styles.modalDescription}>Confirm your Post Office RD PIN.</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
-                            onPress={() => updateStats(0, 10, 0, 5, "RD Activated!")}
+                            onPress={() => updateStats(0, 10, 0, 5, t('ui', 'atmSuccess'))}
                         >
                             <Text style={styles.actionButtonText}>
-                                Confirm PIN {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'confirmPIN')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -745,14 +806,14 @@ export default function Board() {
             case 'MARKET_ROLL':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>MARKET RISK</Text>
+                        <Text style={styles.gameTitle}>{t('miniGames', 'marketRisk')}</Text>
                         <Text style={styles.modalDescription}>Roll the dice to see if grain prices went up!</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
-                            onPress={() => updateStats(500, 0, 0, 5, "Market was Bullish! ₹500 Gain.")}
+                            onPress={() => updateStats(500, 0, 0, 5, t('ui', 'marketSuccess'))}
                         >
                             <Text style={styles.actionButtonText}>
-                                ROLL DICE {activePlayer?.isBot && botSelectedIndex === 0 && " (Choosing...)"}
+                                {t('miniGames', 'rollDice')} {activePlayer?.isBot && botSelectedIndex === 0 && ` (${t('ui', 'choosing')})`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -760,7 +821,7 @@ export default function Board() {
             case 'INPUT_FIELD':
                 return (
                     <View style={styles.miniGameContainer}>
-                        <Text style={styles.gameTitle}>{currentTile.name}</Text>
+                        <Text style={styles.gameTitle}>{getTileName(currentTile.id)}</Text>
                         <Text style={styles.modalDescription}>Enter safe PIN (not 1234 or 0000)</Text>
                         <TouchableOpacity
                             style={[styles.actionButton, activePlayer?.isBot && botSelectedIndex === 0 && styles.botHoverGlow]}
@@ -777,11 +838,44 @@ export default function Board() {
     };
 
     const renderSetup = () => {
+        if (setupStep === 0) {
+            const langs: { id: Language, name: string }[] = [
+                { id: 'en', name: 'English' }, { id: 'hi', name: 'हिन्दी' }, { id: 'mr', name: 'मराठी' },
+                { id: 'bn', name: 'বাংলা' }, { id: 'te', name: 'తెలుగు' }, { id: 'ta', name: 'தமிழ்' },
+                { id: 'gu', name: 'ગુજરાતી' }, { id: 'kn', name: 'ಕನ್ನಡ' }, { id: 'ml', name: 'മലയാളം' },
+                { id: 'or', name: 'ଓଡ଼ିଆ' }, { id: 'pa', name: 'ਪੰਜਾਬੀ' }, { id: 'as', name: 'অসমীয়া' },
+                { id: 'mai', name: 'मैथिली' }, { id: 'bho', name: 'भोजपुरी' }, { id: 'har', name: 'हरियाणवी' },
+                { id: 'sat', name: 'संताली' }
+            ];
+            return (
+                <View style={[styles.setupContainer, { maxHeight: '80%', width: '90%' }]}>
+                    <Text style={styles.setupTitle}>{t('setup', 'selectLanguage')}</Text>
+                    <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false}>
+                        <View style={{ gap: 10, paddingBottom: 20 }}>
+                            {langs.map(l => (
+                                <TouchableOpacity
+                                    key={l.id}
+                                    style={[
+                                        styles.setupOption,
+                                        language === l.id && styles.setupOptionActive,
+                                        { width: '100%', height: 55, borderRadius: 12 }
+                                    ]}
+                                    onPress={() => { setLanguage(l.id); setSetupStep(1); }}
+                                >
+                                    <Text style={[styles.setupOptionText, { fontSize: 16, fontWeight: '600' }]}>{l.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </ScrollView>
+                </View>
+            );
+        }
+
         return (
             <View style={styles.setupContainer}>
-                <Text style={styles.setupTitle}>NEW GAME SETUP</Text>
+                <Text style={styles.setupTitle}>{t('setup', 'title')}</Text>
 
-                <Text style={styles.setupSubtitle}>TOTAL PLAYERS (1-4)</Text>
+                <Text style={styles.setupSubtitle}>{t('setup', 'totalPlayers')}</Text>
                 <View style={styles.setupGrid}>
                     {[1, 2, 3, 4].map(n => (
                         <TouchableOpacity
@@ -799,7 +893,7 @@ export default function Board() {
 
                 {totalPlayers > 0 && (
                     <>
-                        <Text style={styles.setupSubtitle}>HOW MANY OF THESE ARE BOTS?</Text>
+                        <Text style={styles.setupSubtitle}>{t('setup', 'botCount')}</Text>
                         <View style={styles.setupGrid}>
                             {[...Array(totalPlayers + 1)].map((_, i) => (
                                 <TouchableOpacity
@@ -824,7 +918,7 @@ export default function Board() {
                         finalizeSetup();
                     }}
                 >
-                    <Text style={styles.setupButtonText}>START EXPLORING</Text>
+                    <Text style={styles.setupButtonText}>{t('setup', 'startButton')}</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -844,7 +938,7 @@ export default function Board() {
             playerAnims[id] = new Animated.ValueXY({ x: coords.left + offX, y: coords.top + offY });
             playerScales[id] = new Animated.Value(1);
             initialPlayers.push({
-                id, name: `Human ${i + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: false, isOut: false, hearts: 5
+                id, name: `${t('setup', 'human')} ${i + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: false, isOut: false, hearts: 5
             });
         }
         for (let i = hCount; i < totalPlayers; i++) {
@@ -856,12 +950,12 @@ export default function Board() {
             playerAnims[id] = new Animated.ValueXY({ x: coords.left + offX, y: coords.top + offY });
             playerScales[id] = new Animated.Value(1);
             initialPlayers.push({
-                id, name: `Bot ${i - hCount + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i % 4], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: true, isOut: false, hearts: 5
+                id, name: `${t('setup', 'bot')} ${i - hCount + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i % 4], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: true, isOut: false, hearts: 5
             });
         }
         setPlayers(initialPlayers);
         setSetupStep(2);
-        speak("Welcome to Econopolis! 5 Hearts for everyone.");
+        speak(t('ui', 'welcome'));
     };
 
     // Bot Logic
@@ -915,7 +1009,7 @@ export default function Board() {
                         const loanOptions: ('MICRO' | 'NGO' | 'SHARK')[] = ['MICRO', 'NGO', 'SHARK'];
                         const finalIdx = 0; // Bot prefers Micro
                         setBotSelectedIndex(0);
-                        speak(`${activePlayer.name} chooses ${loanOptions[finalIdx]} loan`);
+                        speak(t('bot', 'chooses', { name: activePlayer.name, choice: t('miniGames', loanOptions[finalIdx].toLowerCase()) }));
                         setTimeout(() => {
                             handleTakeLoan(loanOptions[finalIdx]);
                             setBotSelectedIndex(null);
@@ -930,53 +1024,48 @@ export default function Board() {
                         const finalIdx = botSelectedIndex || 0;
                         const fail = Math.random() < 0.1;
                         if (fail) {
-                            speak(`${activePlayer.name} made a mistake!`);
+                            speak(t('bot', 'error', { name: activePlayer.name }));
                             updateStats(-500, 0, -10, 0, "Bot failed the task! Penalty applied.", false, 0, true);
                         } else {
-                            speak(`${activePlayer.name} completes the task.`);
+                            speak(t('bot', 'done', { name: activePlayer.name }));
                             if (miniGameType === 'KYC') {
-                                if (currentTile.id === 17) updateStats(2000, 20, 0, 10, "Bot Grant Approved!");
-                                else updateStats(0, 20, 0, 5, "Bot KYC Verified!");
+                                if (currentTile.id === 17) updateStats(2000, 20, 0, 10, t('ui', 'kycFull'));
+                                else updateStats(0, 20, 0, 5, t('ui', 'kycBasic'));
                             }
                             else if (miniGameType === 'UPI') {
-                                if (finalIdx === 1) updateStats(0, 20, 10, 5, "Bot set a Strong PIN!");
-                                else updateStats(-500, 0, -20, 0, "Bot set a Weak PIN! Fined ₹500.", false, 0, true);
+                                if (finalIdx === 1) updateStats(0, 20, 10, 5, t('ui', 'upiSuccess'));
+                                else updateStats(-500, 0, -20, 0, t('ui', 'upiFail'), false, 0, true);
                             }
                             else if (miniGameType === 'PHISHING') {
-                                if (finalIdx === 1) updateStats(0, 30, 0, 10, "Bot avoided the scam!");
-                                else updateStats(-1000, 0, -50, 0, "Bot fell for the scam! -₹1000.", false, 0, true);
+                                if (finalIdx === 1) updateStats(0, 30, 0, 10, t('ui', 'phishingSuccess'));
+                                else updateStats(-1000, 0, -50, 0, t('ui', 'phishingFail'), false, 0, true);
                             }
                             else if (miniGameType === 'QUIZ') {
-                                if (finalIdx === 1) updateStats(500, 10, 0, 5, "Bot Correct Answer!");
-                                else updateStats(-200, 0, 0, 0, "Bot Wrong Answer! -₹200.", false, 0, true);
+                                if (finalIdx === 1) updateStats(500, 10, 0, 5, t('ui', 'quizCorrect'));
+                                else updateStats(-200, 0, 0, 0, t('ui', 'quizWrong'), false, 0, true);
                             }
-                            else if (miniGameType === 'TAPPER') updateStats(1500, 10, 0, 5, "Bot completed the labor!");
-                            else if (miniGameType === 'PIN_ATM') updateStats(0, 10, 0, 5, "Bot RD Activated!");
-                            else if (miniGameType === 'MARKET_ROLL') updateStats(500, 0, 0, 5, "Bot rolled Market Gain!");
+                            else if (miniGameType === 'TAPPER') updateStats(1500, 10, 0, 5, t('ui', 'tapperSuccess'));
+                            else if (miniGameType === 'PIN_ATM') updateStats(0, 10, 0, 5, t('ui', 'atmSuccess'));
+                            else if (miniGameType === 'MARKET_ROLL') updateStats(500, 0, 0, 5, t('ui', 'marketSuccess'));
                             else if (miniGameType === 'INPUT_FIELD') handleCardAction({ label: "Submit", action_id: "validate_pin", ui_feedback: "Validating..." });
                             else endTurn();
                         }
-                        setIsDecisionMaking(false);
                         setBotSelectedIndex(null);
                         setBotTaskStatus(null);
                     } else if (config) {
                         const finalIndex = Math.floor(Math.random() * config.choices.length);
                         const finalChoice = config.choices[finalIndex];
                         setBotSelectedIndex(finalIndex);
-
-                        // Speak the choice
-                        speak(`${activePlayer.name} chooses ${finalChoice.label}`);
+                        speak(t('bot', 'chooses', { name: activePlayer.name, choice: finalChoice.label }));
 
                         // Wait a bit so the user can see the highlighted option
                         setTimeout(() => {
                             handleCardAction(finalChoice);
                             setBotSelectedIndex(null);
-                            setIsDecisionMaking(false);
                             setBotTaskStatus(null);
                         }, 1500);
                     } else {
                         endTurn();
-                        setIsDecisionMaking(false);
                         setBotTaskStatus(null);
                     }
                 }
@@ -998,10 +1087,10 @@ export default function Board() {
                 {/* Fixed Board Structure - Total 40 Tiles */}
 
                 {/* 1. Corners */}
-                {renderTile(0, TILE_THICKNESS, TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS)}
-                {renderTile(10, TILE_THICKNESS, TILE_THICKNESS, 0, BOARD_SIZE - TILE_THICKNESS)}
-                {renderTile(20, TILE_THICKNESS, TILE_THICKNESS, 0, 0)}
-                {renderTile(30, TILE_THICKNESS, TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS, 0)}
+                <Tile tile={{ ...BOARD_DATA[0], name: getTileName(0) }} width={TILE_THICKNESS} height={TILE_THICKNESS} left={BOARD_SIZE - TILE_THICKNESS} top={BOARD_SIZE - TILE_THICKNESS} focusLevel={focusedIndex === 0 ? 2 : 1} />
+                <Tile tile={{ ...BOARD_DATA[10], name: getTileName(10) }} width={TILE_THICKNESS} height={TILE_THICKNESS} left={0} top={BOARD_SIZE - TILE_THICKNESS} focusLevel={focusedIndex === 10 ? 2 : 1} />
+                <Tile tile={{ ...BOARD_DATA[20], name: getTileName(20) }} width={TILE_THICKNESS} height={TILE_THICKNESS} left={0} top={0} focusLevel={focusedIndex === 20 ? 2 : 1} />
+                <Tile tile={{ ...BOARD_DATA[30], name: getTileName(30) }} width={TILE_THICKNESS} height={TILE_THICKNESS} left={BOARD_SIZE - TILE_THICKNESS} top={0} focusLevel={focusedIndex === 30 ? 2 : 1} />
 
                 {/* 2. Edges */}
                 {[...Array(9)].map((_, i) => {
@@ -1009,28 +1098,28 @@ export default function Board() {
                     const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
                     const s = Math.floor((i * edgeSpace) / 9);
                     const e = Math.floor(((i + 1) * edgeSpace) / 9);
-                    return renderTile(idx, e - s, TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS - e, BOARD_SIZE - TILE_THICKNESS);
+                    return <Tile key={idx} tile={{ ...BOARD_DATA[idx], name: getTileName(idx) }} width={e - s} height={TILE_THICKNESS} left={BOARD_SIZE - TILE_THICKNESS - e} top={BOARD_SIZE - TILE_THICKNESS} focusLevel={focusedIndex === idx ? 2 : 1} />;
                 })}
                 {[...Array(9)].map((_, i) => {
                     const idx = i + 11; // Side 2: Left (Bottom -> Top)
                     const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
                     const s = Math.floor((i * edgeSpace) / 9);
                     const e = Math.floor(((i + 1) * edgeSpace) / 9);
-                    return renderTile(idx, TILE_THICKNESS, e - s, 0, BOARD_SIZE - TILE_THICKNESS - e);
+                    return <Tile key={idx} tile={{ ...BOARD_DATA[idx], name: getTileName(idx) }} width={TILE_THICKNESS} height={e - s} left={0} top={BOARD_SIZE - TILE_THICKNESS - e} focusLevel={focusedIndex === idx ? 2 : 1} />;
                 })}
                 {[...Array(9)].map((_, i) => {
                     const idx = i + 21; // Side 3: Top (Left -> Right)
                     const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
                     const s = Math.floor((i * edgeSpace) / 9);
                     const e = Math.floor(((i + 1) * edgeSpace) / 9);
-                    return renderTile(idx, e - s, TILE_THICKNESS, TILE_THICKNESS + s, 0);
+                    return <Tile key={idx} tile={{ ...BOARD_DATA[idx], name: getTileName(idx) }} width={e - s} height={TILE_THICKNESS} left={TILE_THICKNESS + s} top={0} focusLevel={focusedIndex === idx ? 2 : 1} />;
                 })}
                 {[...Array(9)].map((_, i) => {
                     const idx = i + 31; // Side 4: Right (Top -> Bottom)
                     const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
                     const s = Math.floor((i * edgeSpace) / 9);
                     const e = Math.floor(((i + 1) * edgeSpace) / 9);
-                    return renderTile(idx, TILE_THICKNESS, e - s, BOARD_SIZE - TILE_THICKNESS, TILE_THICKNESS + s);
+                    return <Tile key={idx} tile={{ ...BOARD_DATA[idx], name: getTileName(idx) }} width={TILE_THICKNESS} height={e - s} left={BOARD_SIZE - TILE_THICKNESS} top={TILE_THICKNESS + s} focusLevel={focusedIndex === idx ? 2 : 1} />;
                 })}
 
                 <View style={[styles.centerArea, { margin: TILE_THICKNESS, flex: 1 }]}>
@@ -1052,10 +1141,10 @@ export default function Board() {
                         <Text style={styles.diceTotal}>{isRolling ? "???" : dice[0] + dice[1]}</Text>
 
                         {!activePlayer?.isBot && !hasRolled && !showCard && !isMoving ? (
-                            <Text style={styles.tapToRoll}>TAP TO ROLL</Text>
+                            <Text style={styles.tapToRoll}>{t('ui', 'tapToRoll')}</Text>
                         ) : (
                             <Text style={[styles.turnIndicator, { color: activePlayer?.color, fontSize: 10 }]}>
-                                {activePlayer?.name.toUpperCase()}'S TURN
+                                {`${activePlayer?.name.toUpperCase()} ${t('ui', 'turnOf')}`}
                             </Text>
                         )}
                     </TouchableOpacity>
@@ -1135,13 +1224,13 @@ export default function Board() {
                     <Animated.View style={[styles.modalContent, { transform: [{ scale: cardAnim }] }]}>
                         <ScrollView contentContainerStyle={styles.modalScroll}>
                             <View style={[styles.modalHeader, { backgroundColor: currentTile.color }]}>
-                                <Text style={styles.modalTitle}>{currentTile.name}</Text>
+                                <Text style={styles.modalTitle}>{getTileName(currentTile.id)}</Text>
                                 <Text style={styles.modalType}>{currentTile.type}</Text>
                             </View>
                             <View style={styles.modalBody}>
                                 {activePlayer?.isBot && botTaskStatus && (
                                     <View style={{ marginBottom: 15, padding: 10, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: 10 }}>
-                                        <Text style={{ color: '#3b82f6', fontSize: 11, fontWeight: 'bold', marginBottom: 2 }}>AI BOT IS DECIDING:</Text>
+                                        <Text style={{ color: '#3b82f6', fontSize: 11, fontWeight: 'bold', marginBottom: 2 }}>{t('ui', 'choosing').toUpperCase()}:</Text>
                                         <Text style={{ color: '#fff', fontSize: 13, marginBottom: 6 }}>{botTaskStatus}</Text>
                                         <View style={styles.botProgressBarBase}><View style={[styles.botProgressBarFill, { width: `${botProgress * 100}%` }]} /></View>
                                     </View>
