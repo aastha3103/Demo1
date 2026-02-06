@@ -1,18 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal, Alert, ScrollView, Animated, Easing, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BOARD_DATA } from '../game/board';
-import { CARD_CONFIG, CardData, CardAction } from '../game/CardConfig';
-import { Tile } from './Tile';
+import { CARD_CONFIG, CardAction } from '../game/CardConfig';
 import { Tile as TileType } from '../game/types';
+import { Tile } from './Tile';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Dynamic Board Reflow Logic - Optimized for Portrait Inward Growth
-const BOARD_SIZE = Math.floor(SCREEN_WIDTH - 2);
-const TILE_THICKNESS = Math.floor(BOARD_SIZE * 0.14); // Grows inward
+// Ensuring the board size is strictly constrained by both width and height to prevent panel overlap
+const MAX_BOARD_VAL = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT * 0.55);
+const BOARD_SIZE = Math.floor(MAX_BOARD_VAL - 10);
+const TILE_THICKNESS = Math.floor(BOARD_SIZE * 0.14);
 const INNER_TILE_LENGTH = Math.floor((BOARD_SIZE - 2 * TILE_THICKNESS) / 9);
+const BOARD_VERTICAL_OFFSET = 20; // Safe space for score panels
 
 type MiniGameType = 'GENERIC' | 'UPI' | 'KYC' | 'QUIZ' | 'PHISHING' | 'PLAN_SELECT' | 'TAPPER' | 'VIDEO' | 'SLIDER' | 'MARKET_ROLL' | 'DRAG_DROP' | 'PIN_ATM' | 'CHANCE' | 'COMMUNITY' | 'INPUT_FIELD';
 
@@ -102,15 +105,39 @@ export default function Board() {
     };
 
     const getPlayerCoordinates = (pos: number) => {
+        const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
         // Monopoly standard orientation: 0 (BR), 10 (BL), 20 (TL), 30 (TR)
         if (pos === 0) return { left: BOARD_SIZE - TILE_THICKNESS, top: BOARD_SIZE - TILE_THICKNESS };
-        if (pos < 10) return { left: BOARD_SIZE - TILE_THICKNESS - pos * INNER_TILE_LENGTH, top: BOARD_SIZE - TILE_THICKNESS };
+
+        if (pos < 10) { // Side 1: Bottom (R -> L)
+            const s = Math.floor(((pos - 1) * edgeSpace) / 9);
+            const e = Math.floor((pos * edgeSpace) / 9);
+            const mid = TILE_THICKNESS + (edgeSpace - (s + e) / 2);
+            return { left: mid - 9, top: BOARD_SIZE - TILE_THICKNESS + 5 };
+        }
         if (pos === 10) return { left: 0, top: BOARD_SIZE - TILE_THICKNESS };
-        if (pos < 20) return { left: 0, top: BOARD_SIZE - TILE_THICKNESS - (pos - 10) * INNER_TILE_LENGTH };
+
+        if (pos < 20) { // Side 2: Left (B -> T)
+            const s = Math.floor(((pos - 11) * edgeSpace) / 9);
+            const e = Math.floor(((pos - 10) * edgeSpace) / 9);
+            const mid = TILE_THICKNESS + (edgeSpace - (s + e) / 2);
+            return { left: 5, top: mid - 9 };
+        }
         if (pos === 20) return { left: 0, top: 0 };
-        if (pos < 30) return { left: (pos - 20) * INNER_TILE_LENGTH, top: 0 };
+
+        if (pos < 30) { // Side 3: Top (L -> R)
+            const s = Math.floor(((pos - 21) * edgeSpace) / 9);
+            const e = Math.floor(((pos - 20) * edgeSpace) / 9);
+            const mid = TILE_THICKNESS + (s + e) / 2;
+            return { left: mid - 9, top: 5 };
+        }
         if (pos === 30) return { left: BOARD_SIZE - TILE_THICKNESS, top: 0 };
-        return { left: BOARD_SIZE - TILE_THICKNESS, top: (pos - 30) * INNER_TILE_LENGTH };
+
+        // Side 4: Right (T -> B)
+        const s = Math.floor(((pos - 31) * edgeSpace) / 9);
+        const e = Math.floor(((pos - 30) * edgeSpace) / 9);
+        const mid = TILE_THICKNESS + (s + e) / 2;
+        return { left: BOARD_SIZE - TILE_THICKNESS + 5, top: mid - 9 };
     };
 
     const handleRollDice = () => {
@@ -148,11 +175,13 @@ export default function Board() {
         for (let i = 1; i <= total; i++) {
             const stepPos = (startPos + i) % 40;
             const coords = getPlayerCoordinates(stepPos);
-            const offset = turn * 4;
+            // Calculate quadrant offset (2x2 grid) for multi-player visibility
+            const offX = (activePlayer.id % 2 === 0) ? 4 : TILE_THICKNESS * 0.45;
+            const offY = (activePlayer.id < 2) ? 4 : TILE_THICKNESS * 0.45;
 
             Animated.parallel([
                 Animated.timing(playerAnims[activePlayer.id], {
-                    toValue: { x: coords.left + 5 + offset, y: coords.top + 5 + offset },
+                    toValue: { x: coords.left + offX, y: coords.top + offY },
                     duration: 300,
                     useNativeDriver: true
                 }),
@@ -809,7 +838,10 @@ export default function Board() {
         for (let i = 0; i < hCount; i++) {
             const id = i;
             const coords = getPlayerCoordinates(0);
-            playerAnims[id] = new Animated.ValueXY({ x: coords.left + 5 + (i * 4), y: coords.top + 5 + (i * 4) });
+            const offX = (id % 2 === 0) ? 4 : TILE_THICKNESS * 0.45;
+            const offY = (id < 2) ? 4 : TILE_THICKNESS * 0.45;
+
+            playerAnims[id] = new Animated.ValueXY({ x: coords.left + offX, y: coords.top + offY });
             playerScales[id] = new Animated.Value(1);
             initialPlayers.push({
                 id, name: `Human ${i + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: false, isOut: false, hearts: 5
@@ -818,7 +850,10 @@ export default function Board() {
         for (let i = hCount; i < totalPlayers; i++) {
             const id = i;
             const coords = getPlayerCoordinates(0);
-            playerAnims[id] = new Animated.ValueXY({ x: coords.left + 5 + (i * 4), y: coords.top + 5 + (i * 4) });
+            const offX = (id % 2 === 0) ? 4 : TILE_THICKNESS * 0.45;
+            const offY = (id < 2) ? 4 : TILE_THICKNESS * 0.45;
+
+            playerAnims[id] = new Animated.ValueXY({ x: coords.left + offX, y: coords.top + offY });
             playerScales[id] = new Animated.Value(1);
             initialPlayers.push({
                 id, name: `Bot ${i - hCount + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i % 4], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: true, isOut: false, hearts: 5
@@ -970,20 +1005,32 @@ export default function Board() {
 
                 {/* 2. Edges */}
                 {[...Array(9)].map((_, i) => {
-                    const idx = i + 1; // Bottom: 1-9
-                    return renderTile(idx, INNER_TILE_LENGTH, TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS - (i + 1) * INNER_TILE_LENGTH, BOARD_SIZE - TILE_THICKNESS);
+                    const idx = i + 1; // Side 1: Bottom (Right -> Left)
+                    const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
+                    const s = Math.floor((i * edgeSpace) / 9);
+                    const e = Math.floor(((i + 1) * edgeSpace) / 9);
+                    return renderTile(idx, e - s, TILE_THICKNESS, BOARD_SIZE - TILE_THICKNESS - e, BOARD_SIZE - TILE_THICKNESS);
                 })}
                 {[...Array(9)].map((_, i) => {
-                    const idx = i + 11; // Left: 11-19
-                    return renderTile(idx, TILE_THICKNESS, INNER_TILE_LENGTH, 0, BOARD_SIZE - TILE_THICKNESS - (i + 1) * INNER_TILE_LENGTH);
+                    const idx = i + 11; // Side 2: Left (Bottom -> Top)
+                    const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
+                    const s = Math.floor((i * edgeSpace) / 9);
+                    const e = Math.floor(((i + 1) * edgeSpace) / 9);
+                    return renderTile(idx, TILE_THICKNESS, e - s, 0, BOARD_SIZE - TILE_THICKNESS - e);
                 })}
                 {[...Array(9)].map((_, i) => {
-                    const idx = i + 21; // Top: 21-29
-                    return renderTile(idx, INNER_TILE_LENGTH, TILE_THICKNESS, (i + 1) * INNER_TILE_LENGTH, 0);
+                    const idx = i + 21; // Side 3: Top (Left -> Right)
+                    const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
+                    const s = Math.floor((i * edgeSpace) / 9);
+                    const e = Math.floor(((i + 1) * edgeSpace) / 9);
+                    return renderTile(idx, e - s, TILE_THICKNESS, TILE_THICKNESS + s, 0);
                 })}
                 {[...Array(9)].map((_, i) => {
-                    const idx = i + 31; // Right: 31-39
-                    return renderTile(idx, TILE_THICKNESS, INNER_TILE_LENGTH, BOARD_SIZE - TILE_THICKNESS, (i + 1) * INNER_TILE_LENGTH);
+                    const idx = i + 31; // Side 4: Right (Top -> Bottom)
+                    const edgeSpace = BOARD_SIZE - 2 * TILE_THICKNESS;
+                    const s = Math.floor((i * edgeSpace) / 9);
+                    const e = Math.floor(((i + 1) * edgeSpace) / 9);
+                    return renderTile(idx, TILE_THICKNESS, e - s, BOARD_SIZE - TILE_THICKNESS, TILE_THICKNESS + s);
                 })}
 
                 <View style={[styles.centerArea, { margin: TILE_THICKNESS, flex: 1 }]}>
