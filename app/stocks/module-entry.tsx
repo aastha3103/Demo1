@@ -22,8 +22,9 @@ import {
   MLButton,
   StockChartIllustration,
 } from '@/components/design-system';
+import { useRewards } from '@/context/RewardContext';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dimensions,
   SafeAreaView,
@@ -37,6 +38,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ModuleEntryScreen() {
   const router = useRouter();
+  const { completeTask } = useRewards();
+
+  useEffect(() => {
+    // Complete 'Market Morning' task
+    completeTask('stocks_visit');
+  }, []);
 
   const handleStartLearning = () => {
     router.push('/stocks/learn-mode');

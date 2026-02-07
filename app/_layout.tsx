@@ -1,3 +1,4 @@
+import { RewardProvider } from '@/context/RewardContext';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -13,11 +14,14 @@ export default function RootLayout() {
     }, []);
 
     return (
-        <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="econ" />
-            <Stack.Screen name="stocks" />
-            <Stack.Screen name="mf_sip" />
-        </Stack>
+        <RewardProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="econ" />
+                <Stack.Screen name="stocks" />
+                <Stack.Screen name="mf_sip" />
+                <Stack.Screen name="rewards" />
+            </Stack>
+        </RewardProvider>
     );
 }

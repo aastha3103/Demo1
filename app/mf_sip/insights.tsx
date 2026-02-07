@@ -312,13 +312,21 @@ const BehaviorTab: React.FC = () => {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { useRewards } from '@/context/RewardContext';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
 export default function InsightsScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
   const styles = createStyles(colors, isDark);
   const [activeTab, setActiveTab] = useState<TabId>('growth');
+  const { completeTask } = useRewards();
+
+  useEffect(() => {
+    // Complete the 'Insight Seeker' task
+    completeTask('mf_insight');
+  }, []);
 
   const handleReturnToFinLearn = () => {
     // Navigate back to the home screen

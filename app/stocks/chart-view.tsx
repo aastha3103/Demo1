@@ -17,7 +17,7 @@ import {
 } from '@/components/design-system';
 import { MLEducationalChart } from '@/components/design-system/MLEducationalChart';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -25,10 +25,18 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useRewards } from '../../context/RewardContext';
 
 export default function ChartViewScreen() {
   const router = useRouter();
+  const { completeTask } = useRewards();
   const params = useLocalSearchParams();
+
+  useEffect(() => {
+    // Complete 'Chart Analyst' task
+    completeTask('stocks_chart');
+  }, []);
+
   const stockSymbol = (params.stock as string) || 'TCS';
 
   return (

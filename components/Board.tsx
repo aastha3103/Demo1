@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GAME_DATA_TRANSLATIONS } from '../constants/gameTranslations';
 import { Language, TRANSLATIONS } from '../constants/translations';
+import { useRewards } from '../context/RewardContext';
 import { BOARD_DATA } from '../game/board';
 import { CARD_CONFIG, CardAction } from '../game/CardConfig';
 import { Tile as TileType } from '../game/types';
@@ -55,6 +56,8 @@ interface PlayerState {
 }
 
 export default function Board() {
+    const { completeTask } = useRewards();
+    const [rollCount, setRollCount] = useState(0);
     const [language, setLanguage] = useState<Language>('en');
     const t = (section: string, key: string, params?: Record<string, string | number>) => {
         let text = TRANSLATIONS[language][section]?.[key] || key;
@@ -197,6 +200,13 @@ export default function Board() {
 
     const handleRollDice = () => {
         if (isRolling || isMoving || hasRolled || activePlayer?.isOut || showCard) return;
+
+        const newCount = rollCount + 1;
+        setRollCount(newCount);
+        if (newCount >= 5) {
+            completeTask('econ_roll');
+        }
+
         setIsRolling(true);
         setHasRolled(true);
         speak(t('ui', 'rolling'));
@@ -427,6 +437,9 @@ export default function Board() {
     };
 
     const handleCardAction = (action: CardAction) => {
+        // Complete 'Wise Decision' task
+        completeTask('econ_decision');
+
         const id = action.action_id;
         let m = 0, b = 0, k = 0, c = 0, e = 5;
         let newInv: string[] = [];

@@ -26,6 +26,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useRewards } from '../../context/RewardContext';
 
 // Initial virtual wallet
 const INITIAL_BALANCE = 500000;
@@ -60,6 +61,7 @@ type FeedbackType = 'buyHigh' | 'panicSell' | 'holdStrong' | 'discipline' | null
 
 export default function SimulatorScreen() {
   const router = useRouter();
+  const { completeTask } = useRewards();
   const params = useLocalSearchParams();
   const stockSymbol = (params.stock as string) || 'TCS';
 
@@ -154,6 +156,7 @@ export default function SimulatorScreen() {
       investedAmount: newInvested,
     });
     setTrades(prev => [...prev, { type: 'BUY', quantity: qty, price: currentPrice, timestamp: new Date() }]);
+    completeTask('stocks_trade');
   };
 
   // Sell action
@@ -183,6 +186,7 @@ export default function SimulatorScreen() {
       investedAmount: newInvested,
     });
     setTrades(prev => [...prev, { type: 'SELL', quantity: qty, price: currentPrice, timestamp: new Date(), pnl }]);
+    completeTask('stocks_trade');
   };
 
   // Check for hold through volatility

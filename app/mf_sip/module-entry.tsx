@@ -43,11 +43,19 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { useRewards } from '@/context/RewardContext';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
 export default function ModuleEntryScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
+  const { completeTask } = useRewards();
+
+  useEffect(() => {
+    // Complete the 'Wealth Check' task
+    completeTask('mf_visit');
+  }, []);
   const styles = createStyles(colors, isDark);
   const handleStartLearning = () => {
     // Navigate to learn mode flow

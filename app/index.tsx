@@ -19,13 +19,28 @@ export default function FinCraftLanding() {
             />
 
             <SafeAreaView style={styles.content}>
-                <Animated.View
-                    entering={FadeInDown.duration(1000).springify()}
-                    style={styles.header}
-                >
-                    <Text style={styles.title}>FinCraft</Text>
-                    <Text style={styles.tagline}>Empowering Your Financial Future</Text>
-                </Animated.View>
+                <View style={styles.topHeader}>
+                    <Animated.View
+                        entering={FadeInDown.duration(1000).springify()}
+                        style={styles.header}
+                    >
+                        <Text style={styles.title}>FinCraft</Text>
+                        <Text style={styles.tagline}>Empowering Your Financial Future</Text>
+                    </Animated.View>
+
+                    <Animated.View
+                        entering={FadeInDown.delay(300).duration(800)}
+                        style={styles.rewardsEntry}
+                    >
+                        <TouchableOpacity
+                            onPress={() => router.push('/rewards' as any)}
+                            style={styles.rewardsButton}
+                        >
+                            <Text style={styles.rewardsIcon}>🪙</Text>
+                            <Text style={styles.rewardsText}>Rewards</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </View>
 
                 <View style={styles.cardsContainer}>
                     {/* Econopolis Card */}
@@ -141,24 +156,48 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 60,
     },
-    header: {
+    topHeader: {
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         marginTop: 20,
     },
+    header: {
+        alignItems: 'flex-start',
+    },
     title: {
-        fontSize: 48,
+        fontSize: 42,
         fontWeight: '900',
         color: '#fff',
         letterSpacing: -1,
-        textShadowColor: 'rgba(0, 0, 0, 0.3)',
-        textShadowOffset: { width: 0, height: 4 },
-        textShadowRadius: 10,
     },
     tagline: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#94a3b8',
-        marginTop: 8,
+        marginTop: 4,
         fontWeight: '500',
+    },
+    rewardsEntry: {
+        alignItems: 'flex-end',
+    },
+    rewardsButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    rewardsIcon: {
+        fontSize: 20,
+        marginRight: 6,
+    },
+    rewardsText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 14,
     },
     cardsContainer: {
         gap: 20,

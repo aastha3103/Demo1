@@ -463,11 +463,13 @@ const INVESTMENT_GUIDANCE = {
   MAX_PERCENT: 30, // Maximum recommended: 30% of income
 };
 
+import { useRewards } from '@/context/RewardContext';
 import { useRouter } from 'expo-router';
 
 export default function SimulatorScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
+  const { completeTask } = useRewards();
   const styles = createStyles(colors, isDark);
   const [timeHorizon, setTimeHorizon] = useState<SimulationTimeHorizon>('5Y');
   const [funds, setFunds] = useState<Fund[]>(SAMPLE_FUNDS);
@@ -716,6 +718,7 @@ export default function SimulatorScreen() {
     }
 
     setFunds(prev => [...prev, newFund]);
+    completeTask('mf_sip_plan');
   };
 
   const handleRemoveFund = (fundId: string) => {
@@ -754,6 +757,7 @@ export default function SimulatorScreen() {
       const success = handleUpdateSipAmount(editingFundId, amount);
       if (success) {
         setEditingFundId(null);
+        completeTask('mf_sip_plan');
       } else {
         setEditError('Amount exceeds wallet balance');
       }
