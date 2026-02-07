@@ -861,30 +861,49 @@ export default function Board() {
 
     const renderSetup = () => {
         if (setupStep === 0) {
-            const langs: { id: Language, name: string }[] = [
-                { id: 'en', name: 'English' }, { id: 'hi', name: 'हिन्दी' }, { id: 'mr', name: 'मराठी' },
-                { id: 'bn', name: 'বাংলা' }, { id: 'te', name: 'తెలుగు' }, { id: 'ta', name: 'தமிழ்' },
-                { id: 'gu', name: 'ગુજરાતી' }, { id: 'kn', name: 'ಕನ್ನಡ' }, { id: 'ml', name: 'മലയാളം' },
-                { id: 'or', name: 'ଓଡ଼ିଆ' }, { id: 'pa', name: 'ਪੰਜਾਬੀ' }, { id: 'as', name: 'অসমীয়া' },
-                { id: 'mai', name: 'मैथिली' }, { id: 'bho', name: 'भोजपुरी' }, { id: 'har', name: 'हरियाणवी' },
-                { id: 'sat', name: 'संताली' }
+            const langs: { id: Language, name: string, emoji: string }[] = [
+                { id: 'en', name: 'English', emoji: '🇬🇧' },
+                { id: 'hi', name: 'हिन्दी', emoji: '🇮🇳' },
+                { id: 'mr', name: 'मराठी', emoji: '🏛️' },
+                { id: 'bn', name: 'বাংলা', emoji: '🌸' },
+                { id: 'te', name: 'తెలుగు', emoji: '🌺' },
+                { id: 'ta', name: 'தமிழ்', emoji: '🏯' },
+                { id: 'gu', name: 'ગુજરાતી', emoji: '🦁' },
+                { id: 'kn', name: 'ಕನ್ನಡ', emoji: '🐘' },
+                { id: 'ml', name: 'മലയാളം', emoji: '🥥' },
+                { id: 'or', name: 'ଓଡ଼ିଆ', emoji: '🛕' },
+                { id: 'pa', name: 'ਪੰਜਾਬੀ', emoji: '🌾' },
+                { id: 'as', name: 'অসমীয়া', emoji: '🍵' },
+                { id: 'mai', name: 'मैथिली', emoji: '🎭' },
+                { id: 'bho', name: 'भोजपुरी', emoji: '🎪' },
+                { id: 'har', name: 'हरियाणवी', emoji: '🌻' },
+                { id: 'sat', name: 'संताली', emoji: '🌲' }
             ];
             return (
-                <View style={[styles.setupContainer, { maxHeight: '80%', width: '90%' }]}>
-                    <Text style={styles.setupTitle}>{t('setup', 'selectLanguage')}</Text>
-                    <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false}>
-                        <View style={{ gap: 10, paddingBottom: 20 }}>
+                <View style={styles.setupContainerGreen}>
+                    <View style={styles.setupHeaderGreen}>
+                        <Text style={styles.setupIconGreen}>🏛️</Text>
+                        <Text style={styles.setupTitleGreen}>Econopolis</Text>
+                        <Text style={styles.setupSubheadingGreen}>Choose Your Language / अपनी भाषा चुनें</Text>
+                    </View>
+                    <ScrollView style={{ width: '100%', maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                        <View style={{ gap: 12, paddingBottom: 20 }}>
                             {langs.map(l => (
                                 <TouchableOpacity
                                     key={l.id}
                                     style={[
-                                        styles.setupOption,
-                                        language === l.id && styles.setupOptionActive,
-                                        { width: '100%', height: 55, borderRadius: 12 }
+                                        styles.setupOptionGreen,
+                                        language === l.id && styles.setupOptionActiveGreen,
                                     ]}
                                     onPress={() => { setLanguage(l.id); setSetupStep(1); }}
+                                    activeOpacity={0.8}
                                 >
-                                    <Text style={[styles.setupOptionText, { fontSize: 16, fontWeight: '600' }]}>{l.name}</Text>
+                                    <Text style={styles.setupOptionEmoji}>{l.emoji}</Text>
+                                    <Text style={[
+                                        styles.setupOptionTextGreen,
+                                        language === l.id && styles.setupOptionTextActiveGreen
+                                    ]}>{l.name}</Text>
+                                    <Text style={styles.setupArrow}>→</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -895,36 +914,53 @@ export default function Board() {
 
         if (setupStep === 1) {
             return (
-                <View style={styles.setupContainer}>
-                    <Text style={styles.setupTitle}>{t('setup', 'title')}</Text>
+                <View style={styles.setupContainerGreen}>
+                    <View style={styles.setupHeaderGreen}>
+                        <Text style={styles.setupIconGreen}>👥</Text>
+                        <Text style={styles.setupTitleGreen}>{t('setup', 'title')}</Text>
+                    </View>
 
-                    <Text style={styles.setupSubtitle}>{t('setup', 'totalPlayers')}</Text>
-                    <View style={styles.setupGrid}>
+                    <Text style={styles.setupLabelGreen}>{t('setup', 'totalPlayers')}</Text>
+                    <View style={styles.setupGridGreen}>
                         {[1, 2, 3, 4].map(n => (
                             <TouchableOpacity
                                 key={n}
-                                style={[styles.setupOption, totalPlayers === n && styles.setupOptionActive]}
+                                style={[
+                                    styles.setupNumberOption,
+                                    totalPlayers === n && styles.setupNumberOptionActive
+                                ]}
                                 onPress={() => {
                                     setTotalPlayers(n);
                                     if (botCount >= n) setBotCount(0);
                                 }}
+                                activeOpacity={0.8}
                             >
-                                <Text style={styles.setupOptionText}>{n}</Text>
+                                <Text style={[
+                                    styles.setupNumberText,
+                                    totalPlayers === n && styles.setupNumberTextActive
+                                ]}>{n}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
 
                     {totalPlayers > 0 && (
                         <>
-                            <Text style={styles.setupSubtitle}>{t('setup', 'botCount')}</Text>
-                            <View style={styles.setupGrid}>
+                            <Text style={styles.setupLabelGreen}>{t('setup', 'botCount')}</Text>
+                            <View style={styles.setupGridGreen}>
                                 {[...Array(totalPlayers + 1)].map((_, i) => (
                                     <TouchableOpacity
                                         key={i}
-                                        style={[styles.setupOption, botCount === i && styles.setupOptionActive]}
+                                        style={[
+                                            styles.setupNumberOption,
+                                            botCount === i && styles.setupNumberOptionActive
+                                        ]}
                                         onPress={() => setBotCount(i)}
+                                        activeOpacity={0.8}
                                     >
-                                        <Text style={styles.setupOptionText}>{i}</Text>
+                                        <Text style={[
+                                            styles.setupNumberText,
+                                            botCount === i && styles.setupNumberTextActive
+                                        ]}>{i}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -932,7 +968,7 @@ export default function Board() {
                     )}
 
                     <TouchableOpacity
-                        style={[styles.setupButton, { marginTop: 30 }]}
+                        style={styles.setupButtonGreen}
                         onPress={() => {
                             if (totalPlayers === botCount && totalPlayers > 0) {
                                 Alert.alert("Error", "At least one player must be human!");
@@ -940,8 +976,10 @@ export default function Board() {
                             }
                             setSetupStep(2);
                         }}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.setupButtonText}>{t('setup', 'startButton')}</Text>
+                        <Text style={styles.setupButtonTextGreen}>{t('setup', 'startButton')}</Text>
+                        <Text style={styles.setupButtonArrow}>→</Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -949,14 +987,17 @@ export default function Board() {
 
         const hCount = totalPlayers - botCount;
         return (
-            <View style={[styles.setupContainer, { width: '90%' }]}>
-                <Text style={styles.setupTitle}>PLAYER NAMES</Text>
-                <ScrollView style={{ width: '100%' }}>
+            <View style={styles.setupContainerGreen}>
+                <View style={styles.setupHeaderGreen}>
+                    <Text style={styles.setupIconGreen}>✏️</Text>
+                    <Text style={styles.setupTitleGreen}>Player Names</Text>
+                </View>
+                <ScrollView style={{ width: '100%' }} showsVerticalScrollIndicator={false}>
                     {[...Array(hCount)].map((_, i) => (
-                        <View key={i} style={{ width: '100%', marginBottom: 10 }}>
-                            <Text style={styles.setupSubtitle}>PLAYER {i + 1} NAME</Text>
+                        <View key={i} style={{ width: '100%', marginBottom: 16 }}>
+                            <Text style={styles.setupLabelGreen}>Player {i + 1} Name</Text>
                             <TextInput
-                                style={styles.setupInput}
+                                style={styles.setupInputGreen}
                                 value={playerNames[i]}
                                 onChangeText={(val) => {
                                     const newNames = [...playerNames];
@@ -964,16 +1005,17 @@ export default function Board() {
                                     setPlayerNames(newNames);
                                 }}
                                 placeholder={`Enter Name ${i + 1}`}
-                                placeholderTextColor="#475569"
+                                placeholderTextColor="#9CA3AF"
                             />
                         </View>
                     ))}
                 </ScrollView>
                 <TouchableOpacity
-                    style={[styles.setupButton, { marginTop: 20 }]}
+                    style={styles.setupButtonGreen}
                     onPress={() => finalizeSetup()}
+                    activeOpacity={0.8}
                 >
-                    <Text style={styles.setupButtonText}>{t('setup', 'startButton')}</Text>
+                    <Text style={styles.setupButtonTextGreen}>🎮 Start Game</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -1302,7 +1344,7 @@ export default function Board() {
 }
 
 const styles = StyleSheet.create({
-    outerContainer: { flex: 1, backgroundColor: '#020617', justifyContent: 'center', alignItems: 'center' },
+    outerContainer: { flex: 1, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center' },
     boardContainer: { backgroundColor: '#0f172a', position: 'relative' },
     row: {
         flexDirection: 'row',
@@ -1328,15 +1370,19 @@ const styles = StyleSheet.create({
     heartRow: { flexDirection: 'row', gap: 2, marginTop: 4 },
     pName: { color: '#94a3b8', fontSize: 10, marginTop: 2 },
     panelPiece: { width: 14, height: 14, borderRadius: 7, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-    activePanelGlow: { borderColor: '#fff', borderWidth: 1, backgroundColor: '#1e293b' },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-    modalContent: { width: '85%', backgroundColor: '#0f172a', borderRadius: 20, overflow: 'hidden' },
-    modalScroll: { paddingBottom: 20 },
+    activePanelGlow: { borderColor: '#f59e0b', borderWidth: 2, shadowColor: '#f59e0b', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 10 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+    modalContent: { backgroundColor: '#0f172a', borderRadius: 20, width: '100%', maxHeight: '90%', overflow: 'hidden' },
+    modalScroll: { flexGrow: 1 },
     modalHeader: { padding: 20, alignItems: 'center' },
     modalTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    modalType: { color: 'rgba(255,255,255,0.7)', fontSize: 12 },
+    modalType: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 4 },
     modalBody: { padding: 20 },
     modalDescription: { color: '#94a3b8', textAlign: 'center', marginBottom: 20 },
+    cardStory: { color: '#fff', fontSize: 15, lineHeight: 22, marginBottom: 20 },
+    choicesContainer: { gap: 10 },
+    choiceButton: { padding: 15, borderRadius: 12, backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155' },
+    choiceButtonText: { color: '#fff', fontWeight: '600', textAlign: 'center' },
     actionContainer: { width: '100%' },
     actionButton: { padding: 15, borderRadius: 12, backgroundColor: '#3b82f6', alignItems: 'center' },
     actionButtonText: { color: '#fff', fontWeight: 'bold' },
@@ -1344,6 +1390,7 @@ const styles = StyleSheet.create({
     gameTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 15 },
     loanOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, borderWidth: 1, borderRadius: 12, width: '100%' },
     loanLender: { color: '#fff', fontWeight: 'bold' },
+    // Old setup styles (kept for compatibility)
     setupContainer: { padding: 30, backgroundColor: '#0f172a', borderRadius: 20, alignItems: 'center' },
     setupTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 20 },
     setupSubtitle: { color: '#94a3b8', fontSize: 12, fontWeight: '600', marginTop: 15, marginBottom: 8, textTransform: 'uppercase' },
@@ -1362,6 +1409,147 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         borderWidth: 1,
         borderColor: '#334155'
+    },
+    // NEW Green-White Theme Setup Styles
+    setupContainerGreen: {
+        padding: 24,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        shadowColor: '#166534',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        elevation: 8,
+        borderWidth: 2,
+        borderColor: '#dcfce7'
+    },
+    setupHeaderGreen: {
+        alignItems: 'center',
+        marginBottom: 24,
+        width: '100%'
+    },
+    setupIconGreen: {
+        fontSize: 48,
+        marginBottom: 12
+    },
+    setupTitleGreen: {
+        color: '#166534',
+        fontSize: 28,
+        fontWeight: '900',
+        marginBottom: 8,
+        textAlign: 'center'
+    },
+    setupSubheadingGreen: {
+        color: '#6B7280',
+        fontSize: 14,
+        textAlign: 'center'
+    },
+    setupLabelGreen: {
+        color: '#15803d',
+        fontSize: 14,
+        fontWeight: '700',
+        marginBottom: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        alignSelf: 'flex-start'
+    },
+    setupGridGreen: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 24,
+        justifyContent: 'center'
+    },
+    setupOptionGreen: {
+        width: '100%',
+        height: 60,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        borderWidth: 2,
+        borderColor: '#dcfce7'
+    },
+    setupOptionActiveGreen: {
+        backgroundColor: '#16a34a',
+        borderColor: '#16a34a'
+    },
+    setupOptionEmoji: {
+        fontSize: 24,
+        marginRight: 12
+    },
+    setupOptionTextGreen: {
+        color: '#1F2937',
+        fontSize: 18,
+        fontWeight: '700',
+        flex: 1
+    },
+    setupOptionTextActiveGreen: {
+        color: '#FFFFFF'
+    },
+    setupArrow: {
+        color: '#16a34a',
+        fontSize: 20,
+        fontWeight: '700'
+    },
+    setupNumberOption: {
+        width: 56,
+        height: 56,
+        backgroundColor: '#f0fdf4',
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#dcfce7'
+    },
+    setupNumberOptionActive: {
+        backgroundColor: '#16a34a',
+        borderColor: '#16a34a'
+    },
+    setupNumberText: {
+        color: '#1F2937',
+        fontSize: 22,
+        fontWeight: '800'
+    },
+    setupNumberTextActive: {
+        color: '#FFFFFF'
+    },
+    setupButtonGreen: {
+        padding: 18,
+        backgroundColor: '#16a34a',
+        borderRadius: 16,
+        width: '100%',
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 8
+    },
+    setupButtonTextGreen: {
+        color: '#FFFFFF',
+        fontWeight: '800',
+        fontSize: 18
+    },
+    setupButtonArrow: {
+        color: '#FFFFFF',
+        fontSize: 20,
+        fontWeight: '800'
+    },
+    setupInputGreen: {
+        backgroundColor: '#f0fdf4',
+        color: '#1F2937',
+        padding: 16,
+        borderRadius: 12,
+        width: '100%',
+        marginBottom: 8,
+        borderWidth: 2,
+        borderColor: '#dcfce7',
+        fontSize: 16,
+        fontWeight: '600'
     },
     botThinkingContainer: { alignItems: 'center' },
     botThinkingIcon: { marginBottom: 15 },
