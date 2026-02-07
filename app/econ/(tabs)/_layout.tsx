@@ -16,7 +16,9 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: { display: 'none' }, // Hide tabs for gameplay-only screen
-      }}>
+      }}
+      initialRouteName="index"
+    >
       <Tabs.Screen
         name="index"
         options={{
