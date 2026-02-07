@@ -9,6 +9,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DesignColors } from '@/constants/design-system';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 
 // Simple icon component for tabs
 const TabIcon = ({ name, color }: { name: string; color: string }) => (
@@ -18,6 +19,7 @@ const TabIcon = ({ name, color }: { name: string; color: string }) => (
 );
 
 export default function TabLayout() {
+  const { t } = useStockLanguage();
   return (
     <Tabs
       screenOptions={{
@@ -40,21 +42,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('common.start'),
           tabBarIcon: ({ color }) => <TabIcon name="🏠" color={color} />,
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
-          title: 'Learn',
+          title: t('tabs.learn.title'),
           tabBarIcon: ({ color }) => <TabIcon name="📚" color={color} />,
         }}
       />
       <Tabs.Screen
         name="practice"
         options={{
-          title: 'Practice',
+          title: t('tabs.practice.title'),
           tabBarIcon: ({ color }) => <TabIcon name="📈" color={color} />,
         }}
       />

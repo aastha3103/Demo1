@@ -14,6 +14,7 @@ import {
   MLCard,
   MLHeader
 } from '@/components/design-system';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -61,6 +62,7 @@ type FeedbackType = 'buyHigh' | 'panicSell' | 'holdStrong' | 'discipline' | null
 
 export default function SimulatorScreen() {
   const router = useRouter();
+  const { t } = useStockLanguage();
   const { completeTask } = useRewards();
   const params = useLocalSearchParams();
   const stockSymbol = (params.stock as string) || 'TCS';
@@ -104,32 +106,22 @@ export default function SimulatorScreen() {
 
   // Educational feedback logic
   const showEducationalFeedback = (type: FeedbackType) => {
-    const feedbacks = {
-      buyHigh: {
-        title: '⚠️ Buying After Rise',
-        message: 'You bought after a sharp price increase. This is risky! Prices often correct after rapid rises. Consider waiting for dips.',
-        icon: '📈',
-      },
-      panicSell: {
-        title: '😰 Panic Selling?',
-        message: 'Selling quickly after a drop locks in losses. Successful investors often hold through volatility and wait for recovery.',
-        icon: '📉',
-      },
-      holdStrong: {
-        title: '💪 Great Patience!',
-        message: 'Holding through volatility shows discipline. Many gains come from staying invested during uncertain times.',
-        icon: '🏆',
-      },
-      discipline: {
-        title: '🎓 Trading Discipline',
-        message: 'Stock trading requires research, patience, and discipline. Never invest money you cannot afford to lose.',
-        icon: '📚',
-      },
+    if (!type) return;
+
+    const feedbackData = t(`simulator.feedback.${type}`) as any;
+    const icons = {
+      buyHigh: '📈',
+      panicSell: '📉',
+      holdStrong: '🏆',
+      discipline: '📚',
     };
-    if (type) {
-      setFeedbackMessage(feedbacks[type]);
-      setShowFeedback(type);
-    }
+
+    setFeedbackMessage({
+      title: feedbackData.title,
+      message: feedbackData.message,
+      icon: icons[type] || '🎓',
+    });
+    setShowFeedback(type);
   };
 
   // Buy action
@@ -205,8 +197,8 @@ export default function SimulatorScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <MLHeader
-        title="Trading Simulator"
-        subtitle="Virtual Practice"
+        title={t('simulator.title')}
+        subtitle={t('simulator.subtitle')}
         variant="default"
         onLeftAction={() => router.back()}
         rightIcon="📊"
@@ -216,13 +208,13 @@ export default function SimulatorScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Virtual Badge */}
         <View style={styles.virtualBadge}>
-          <Text style={styles.virtualBadgeText}>🎮 VIRTUAL MONEY - NO REAL TRADING</Text>
+          <Text style={styles.virtualBadgeText}>{t('simulator.virtualBadge')}</Text>
         </View>
 
         {/* Portfolio Summary */}
         <MLCard variant="glass">
           <View style={styles.portfolioHeader}>
-            <Text style={styles.portfolioLabel}>Portfolio Value</Text>
+            <Text style={styles.portfolioLabel}>{t('simulator.portfolioValue')}</Text>
             <Text style={styles.portfolioValue}>{formatCurrency(totalPortfolioValue)}</Text>
             <View style={[styles.pnlBadge, totalPnL >= 0 ? styles.pnlPositive : styles.pnlNegative]}>
               <Text style={[styles.pnlText, { color: totalPnL >= 0 ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>
@@ -232,10 +224,10 @@ export default function SimulatorScreen() {
           </View>
 
           <View style={styles.statsGrid}>
-            <StatItem label="Available Cash" value={formatCurrency(cash)} />
-            <StatItem label="Holdings Value" value={formatCurrency(holding.quantity * currentPrice)} />
-            <StatItem label="Realized P&L" value={formatCurrency(realizedPnL)} isProfit={realizedPnL >= 0} />
-            <StatItem label="Unrealized P&L" value={formatCurrency(unrealizedPnL)} isProfit={unrealizedPnL >= 0} />
+            <StatItem label={t('simulator.cash')} value={formatCurrency(cash)} />
+            <StatItem label={t('simulator.holdingsValue')} value={formatCurrency(holding.quantity * currentPrice)} />
+            <StatItem label={t('simulator.realizedPnL')} value={formatCurrency(realizedPnL)} isProfit={realizedPnL >= 0} />
+            <StatItem label={t('simulator.unrealizedPnL')} value={formatCurrency(unrealizedPnL)} isProfit={unrealizedPnL >= 0} />
           </View>
         </MLCard>
 
@@ -278,11 +270,11 @@ export default function SimulatorScreen() {
           {holding.quantity > 0 && (
             <View style={styles.holdingInfo}>
               <View style={styles.holdingRow}>
-                <Text style={styles.holdingLabel}>Your Holdings</Text>
-                <Text style={styles.holdingValue}>{holding.quantity} shares</Text>
+                <Text style={styles.holdingLabel}>{t('simulator.yourHoldings')}</Text>
+                <Text style={styles.holdingValue}>{holding.quantity} {t('simulator.shares')}</Text>
               </View>
               <View style={styles.holdingRow}>
-                <Text style={styles.holdingLabel}>Avg. Buy Price</Text>
+                <Text style={styles.holdingLabel}>{t('simulator.avgPrice')}</Text>
                 <Text style={styles.holdingValue}>{formatCurrency(holding.avgPrice)}</Text>
               </View>
             </View>
@@ -291,10 +283,10 @@ export default function SimulatorScreen() {
 
         {/* Trade Actions */}
         <MLCard variant="outlined">
-          <Text style={styles.tradeTitle}>Make a Trade</Text>
+          <Text style={styles.tradeTitle}>{t('simulator.makeTrade')}</Text>
 
           <View style={styles.quantityRow}>
-            <Text style={styles.quantityLabel}>Quantity:</Text>
+            <Text style={styles.quantityLabel}>{t('simulator.quantity')}:</Text>
             <View style={styles.quantityInput}>
               <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(prev => String(Math.max(1, parseInt(prev) - 1)))}>
                 <Text style={styles.qtyBtnText}>−</Text>
@@ -312,13 +304,13 @@ export default function SimulatorScreen() {
           </View>
 
           <View style={styles.tradePreview}>
-            <Text style={styles.previewLabel}>Trade Value:</Text>
+            <Text style={styles.previewLabel}>{t('simulator.tradeValue')}:</Text>
             <Text style={styles.previewValue}>{formatCurrency((parseInt(quantity) || 0) * currentPrice)}</Text>
           </View>
 
           <View style={styles.tradeButtons}>
             <MLButton
-              title="BUY"
+              title={t('simulator.buy')}
               variant="success"
               size="large"
               onPress={handleBuy}
@@ -326,7 +318,7 @@ export default function SimulatorScreen() {
               style={styles.tradeBtn}
             />
             <MLButton
-              title="SELL"
+              title={t('simulator.sell')}
               variant="danger"
               size="large"
               onPress={handleSell}
@@ -339,7 +331,7 @@ export default function SimulatorScreen() {
         {/* Recent Trades */}
         {trades.length > 0 && (
           <MLCard variant="outlined">
-            <Text style={styles.tradesTitle}>Recent Trades</Text>
+            <Text style={styles.tradesTitle}>{t('simulator.recentTrades')}</Text>
             {trades.slice(-5).reverse().map((trade, i) => (
               <View key={i} style={styles.tradeItem}>
                 <View style={[styles.tradeBadge, { backgroundColor: trade.type === 'BUY' ? `${DesignColors.secondary[400]}20` : `${DesignColors.semantic.negative.main}20` }]}>
@@ -360,7 +352,7 @@ export default function SimulatorScreen() {
         <View style={styles.reminder}>
           <Text style={styles.reminderIcon}>🎓</Text>
           <Text style={styles.reminderText}>
-            Stock trading requires <Text style={{ fontWeight: '700' }}>understanding and discipline</Text>. This is practice - learn before investing real money.
+            {t('simulator.reminder')}
           </Text>
         </View>
       </ScrollView>
@@ -372,7 +364,7 @@ export default function SimulatorScreen() {
             <Text style={styles.feedbackIcon}>{feedbackMessage.icon}</Text>
             <Text style={styles.feedbackTitle}>{feedbackMessage.title}</Text>
             <Text style={styles.feedbackMessage}>{feedbackMessage.message}</Text>
-            <MLButton title="Got it" variant="primary" size="medium" onPress={() => setShowFeedback(null)} />
+            <MLButton title={t('common.gotIt')} variant="primary" size="medium" onPress={() => setShowFeedback(null)} />
           </View>
         </View>
       </Modal>

@@ -17,6 +17,7 @@ import {
     WBLEntrance,
     WBLInput
 } from '@/components/mf_sip/design-system';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
 import React, { useEffect, useState } from 'react';
 import {
@@ -64,6 +65,7 @@ const calculateMaturity = (
 
 export default function CalculatorScreen() {
     const { colors, isDark } = useDesignTheme();
+    const { t } = useMFLanguage();
     const styles = createStyles(colors, isDark);
 
     const [investmentType, setInvestmentType] = useState<'SIP' | 'Lumpsum'>('SIP');
@@ -96,15 +98,15 @@ export default function CalculatorScreen() {
             >
                 <WBLEntrance delay={100}>
                     <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Wealth Calculator</Text>
-                        <Text style={styles.headerSubtitle}>Plan your future with precision</Text>
+                        <Text style={styles.headerTitle}>{t('calculator.title')}</Text>
+                        <Text style={styles.headerSubtitle}>{t('calculator.subtitle')}</Text>
                     </View>
                 </WBLEntrance>
 
                 {/* Results Card */}
                 <WBLEntrance delay={200}>
                     <WBLCard variant="accent" style={styles.resultsCard}>
-                        <Text style={styles.resultsLabel}>ESTIMATED MATURITY VALUE</Text>
+                        <Text style={styles.resultsLabel}>{t('calculator.maturityLabel')}</Text>
                         <View style={styles.maturityAmountContainer}>
                             <Text style={styles.currencySymbol}>₹</Text>
                             <View style={{ flexShrink: 1 }}>
@@ -116,13 +118,13 @@ export default function CalculatorScreen() {
 
                         <View style={styles.resultsGrid}>
                             <View style={styles.resultItem}>
-                                <Text style={styles.smallLabel}>TOTAL INVESTED</Text>
+                                <Text style={styles.smallLabel}>{t('calculator.totalInvested')}</Text>
                                 <Text style={styles.smallValue}>
                                     ₹<WBLAnimatedNumber value={Math.round(results.invested)} />
                                 </Text>
                             </View>
                             <View style={styles.resultItem}>
-                                <Text style={styles.smallLabel}>EST. PROFIT</Text>
+                                <Text style={styles.smallLabel}>{t('calculator.estProfit')}</Text>
                                 <Text style={[styles.smallValue, { color: colors.secondary[600] }]}>
                                     +₹<WBLAnimatedNumber value={Math.round(results.profit)} />
                                 </Text>
@@ -130,7 +132,7 @@ export default function CalculatorScreen() {
                         </View>
 
                         <View style={styles.profitBadgeContainer}>
-                            <WBLBadge content={`${percentageProfit.toFixed(1)}% Return`} variant="success" />
+                            <WBLBadge content={t('calculator.returnLabel').replace('{percent}', percentageProfit.toFixed(1))} variant="success" />
                         </View>
                     </WBLCard>
                 </WBLEntrance>
@@ -143,42 +145,42 @@ export default function CalculatorScreen() {
                                 onPress={() => setInvestmentType('SIP')}
                                 style={[styles.toggleButton, investmentType === 'SIP' && styles.toggleButtonActive]}
                             >
-                                <Text style={[styles.toggleText, investmentType === 'SIP' && styles.toggleTextActive]}>SIP</Text>
+                                <Text style={[styles.toggleText, investmentType === 'SIP' && styles.toggleTextActive]}>{t('calculator.sip')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => setInvestmentType('Lumpsum')}
                                 style={[styles.toggleButton, investmentType === 'Lumpsum' && styles.toggleButtonActive]}
                             >
-                                <Text style={[styles.toggleText, investmentType === 'Lumpsum' && styles.toggleTextActive]}>Lump sum</Text>
+                                <Text style={[styles.toggleText, investmentType === 'Lumpsum' && styles.toggleTextActive]}>{t('calculator.lumpsum')}</Text>
                             </TouchableOpacity>
                         </View>
 
                         <WBLInput
-                            label={investmentType === 'SIP' ? "Monthly Investment Amount" : "One-time Investment Amount"}
+                            label={investmentType === 'SIP' ? t('calculator.monthlyLabel') : t('calculator.onetimeLabel')}
                             value={amount}
                             onChangeText={setAmount}
                             keyboardType="numeric"
-                            placeholder="e.g. 5000"
+                            placeholder={t('simulator.placeholder').replace('{value}', '5000')}
                             leftElement={<Text style={styles.inputIcon}>₹</Text>}
                         />
 
                         <View style={styles.rowInputs}>
                             <View style={{ flex: 1, marginRight: DesignSpacing.md }}>
                                 <WBLInput
-                                    label="Time Period (Years)"
+                                    label={t('calculator.periodLabel')}
                                     value={years}
                                     onChangeText={setYears}
                                     keyboardType="numeric"
-                                    placeholder="e.g. 10"
+                                    placeholder={t('simulator.placeholder').replace('{value}', '10')}
                                 />
                             </View>
                             <View style={{ flex: 1 }}>
                                 <WBLInput
-                                    label="Expected Return (%)"
+                                    label={t('calculator.expectedReturn')}
                                     value={expectedReturn}
                                     onChangeText={setExpectedReturn}
                                     keyboardType="numeric"
-                                    placeholder="e.g. 12"
+                                    placeholder={t('simulator.placeholder').replace('{value}', '12')}
                                 />
                             </View>
                         </View>
@@ -189,11 +191,10 @@ export default function CalculatorScreen() {
                     <WBLCard style={styles.insightCard}>
                         <View style={styles.insightHeader}>
                             <Text style={styles.insightEmoji}>💡</Text>
-                            <Text style={styles.insightTitle}>Investor Insight</Text>
+                            <Text style={styles.insightTitle}>{t('calculator.investorInsight')}</Text>
                         </View>
                         <Text style={styles.insightText}>
-                            Increasing your {investmentType === 'SIP' ? 'SIP' : 'investment'} by just 10% every year can lead to a
-                            significantly higher maturity amount due to the power of compounding.
+                            {t('calculator.insightText').replace('{type}', investmentType === 'SIP' ? t('calculator.sip') : t('calculator.lumpsum'))}
                         </Text>
                     </WBLCard>
                 </WBLEntrance>

@@ -16,9 +16,11 @@ import {
   WBLEntrance
 } from '@/components/mf_sip/design-system';
 import { CATEGORIES, Lesson, LESSONS } from '@/constants/mf_sip/lesson-data';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { getLessonProgress } from '@/utils/mf_sip/lessonProgress';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -41,10 +43,12 @@ interface LessonItemProps {
   lesson: Lesson;
   onPress: () => void;
   index: number;
+  isCompleted: boolean;
 }
 
-const LessonItem: React.FC<LessonItemProps> = ({ lesson, onPress, index }) => {
+const LessonItem: React.FC<LessonItemProps> = ({ lesson, onPress, index, isCompleted }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
 
   return (
@@ -53,16 +57,22 @@ const LessonItem: React.FC<LessonItemProps> = ({ lesson, onPress, index }) => {
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <WBLCard variant="default" style={styles.lessonItemCard}>
+        <WBLCard variant={isCompleted ? "accent" : "default"} style={styles.lessonItemCard}>
           <View style={styles.lessonIconContainer}>
-            <Text style={styles.lessonIcon}>{lesson.icon}</Text>
+            <Text style={styles.lessonIcon}>{isCompleted ? '✅' : lesson.icon}</Text>
           </View>
           <View style={styles.lessonTextContainer}>
-            <Text style={styles.lessonCategory}>{lesson.category}</Text>
-            <Text style={styles.lessonTitle}>{lesson.title}</Text>
-            <Text style={styles.lessonShortDesc}>{lesson.shortDesc}</Text>
+            <Text style={styles.lessonCategory}>{t(`home.categories.${lesson.category.toLowerCase()}`) || lesson.category}</Text>
+            <Text style={styles.lessonTitle}>
+              {t(`lessons.l${lesson.id}.title`).startsWith('lessons.') ? lesson.title : t(`lessons.l${lesson.id}.title`)}
+            </Text>
+            <Text style={styles.lessonShortDesc}>
+              {isCompleted
+                ? (t('home.completed') || 'Completed ✓')
+                : (t(`lessons.l${lesson.id}.shortDesc`).startsWith('lessons.') ? lesson.shortDesc : t(`lessons.l${lesson.id}.shortDesc`))}
+            </Text>
           </View>
-          <Text style={styles.lessonArrow}>→</Text>
+          <Text style={styles.lessonArrow}>{isCompleted ? '↺' : '→'}</Text>
         </WBLCard>
       </TouchableOpacity>
     </WBLEntrance>
@@ -76,9 +86,22 @@ const LessonItem: React.FC<LessonItemProps> = ({ lesson, onPress, index }) => {
 export default function ExploreScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
 
   const [activeCategory, setActiveCategory] = useState('All');
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+
+  // Load progress when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const loadProgress = async () => {
+        const progress = await getLessonProgress();
+        setCompletedLessons(progress.completedLessons);
+      };
+      loadProgress();
+    }, [])
+  );
 
   const filteredLessons = activeCategory === 'All'
     ? LESSONS
@@ -99,11 +122,11 @@ export default function ExploreScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Learning Hub</Text>
-          <Text style={styles.headerSubtitle}>20 Essential Wellness Lessons</Text>
+          <Text style={styles.headerTitle}>{t('explore.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('explore.subtitle')}</Text>
         </View>
         <View style={styles.progBadge}>
-          <Text style={styles.progBadgeText}>0/20</Text>
+          <Text style={styles.progBadgeText}>{completedLessons.length}/20</Text>
         </View>
       </View>
 
@@ -136,6 +159,7 @@ export default function ExploreScreen() {
           <LessonItem
             lesson={item}
             index={index}
+            isCompleted={completedLessons.includes(item.id)}
             onPress={() => handleLessonPress(item.id)}
           />
         )}
@@ -146,8 +170,8 @@ export default function ExploreScreen() {
             <WBLCard variant="accent" style={styles.bannerCard}>
               <Text style={styles.bannerEmoji}>🌱</Text>
               <View style={styles.bannerText}>
-                <Text style={styles.bannerTitle}>Plan your harvest</Text>
-                <Text style={styles.bannerDesc}>Completed lessons help you unlock new simulation levels!</Text>
+                <Text style={styles.bannerTitle}>{t('explore.bannerTitle')}</Text>
+                <Text style={styles.bannerDesc}>{t('explore.bannerDesc')}</Text>
               </View>
             </WBLCard>
           </View>
@@ -155,7 +179,7 @@ export default function ExploreScreen() {
         ListFooterComponent={
           <View style={styles.footerSpace}>
             <WBLButton
-              title="Practice Simulation 🚀"
+              title={t('explore.practiceButton')}
               variant="secondary"
               onPress={() => router.push('/mf_sip/simulator')}
               style={styles.simulationButton}

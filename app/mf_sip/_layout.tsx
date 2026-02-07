@@ -5,13 +5,13 @@
  */
 
 import { DesignColors } from '@/components/mf_sip/design-system';
+import { MFLanguageProvider } from '@/context/MFLanguageContext';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 
 export default function MF_SIPLayout() {
     return (
-        <>
+        <MFLanguageProvider>
             <Stack
                 screenOptions={{
                     headerShown: false,
@@ -26,6 +26,6 @@ export default function MF_SIPLayout() {
                 <Stack.Screen name="simulator" />
             </Stack>
             <StatusBar style="auto" />
-        </>
+        </MFLanguageProvider>
     );
 }

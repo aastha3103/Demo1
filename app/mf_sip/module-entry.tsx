@@ -26,6 +26,7 @@ import {
   WBLButton,
   WBLEntrance
 } from '@/components/mf_sip/design-system';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
 import React from 'react';
 import {
@@ -34,7 +35,8 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -51,6 +53,7 @@ export default function ModuleEntryScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
   const { completeTask } = useRewards();
+  const { language, setLanguage, t } = useMFLanguage();
 
   useEffect(() => {
     // Complete the 'Wealth Check' task
@@ -68,13 +71,28 @@ export default function ModuleEntryScreen() {
 
       <View style={styles.content}>
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* FINLEARN BRANDING */}
+        {/* TOP BAR - BRANDING & LANGUAGE */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
         <WBLEntrance delay={200} direction="down">
-          <View style={styles.brandingContainer}>
+          <View style={styles.topBar}>
             <View style={styles.brandingBadge}>
               <Text style={styles.brandingIcon}>📚</Text>
-              <Text style={styles.brandingText}>FinLearn</Text>
+              <Text style={styles.brandingText}>{t('entry.branding')}</Text>
+            </View>
+
+            <View style={styles.languageToggle}>
+              <TouchableOpacity
+                onPress={() => setLanguage('en')}
+                style={[styles.langBtn, language === 'en' && styles.langBtnActive]}
+              >
+                <Text style={[styles.langText, language === 'en' && styles.langTextActive]}>EN</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setLanguage('hi')}
+                style={[styles.langBtn, language === 'hi' && styles.langBtnActive]}
+              >
+                <Text style={[styles.langText, language === 'hi' && styles.langTextActive]}>हि</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </WBLEntrance>
@@ -91,8 +109,8 @@ export default function ModuleEntryScreen() {
 
             {/* Title Section */}
             <View style={styles.titleSection}>
-              <Text style={styles.mainTitle}>Wealth Builder Lab</Text>
-              <Text style={styles.subtitle}>20+ Lessons to build your wealth</Text>
+              <Text style={styles.mainTitle}>{t('entry.title')}</Text>
+              <Text style={styles.subtitle}>{t('entry.subtitle')}</Text>
             </View>
           </View>
         </WBLEntrance>
@@ -103,7 +121,7 @@ export default function ModuleEntryScreen() {
         <View style={styles.actionSection}>
           {/* Primary CTA */}
           <WBLButton
-            title="Start Learning"
+            title={t('entry.startLearning')}
             variant="primary"
             size="large"
             fullWidth
@@ -115,7 +133,7 @@ export default function ModuleEntryScreen() {
           <View style={styles.reassuranceContainer}>
             <View style={styles.reassuranceBadge}>
               <Text style={styles.reassuranceIcon}>🛡️</Text>
-              <Text style={styles.reassuranceText}>No real money involved</Text>
+              <Text style={styles.reassuranceText}>{t('entry.reassurance')}</Text>
             </View>
           </View>
         </View>
@@ -142,9 +160,11 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // BRANDING
+  // TOP BAR
   // ─────────────────────────────────────────────────────────────────────────
-  brandingContainer: {
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: DesignSpacing.lg,
   },
@@ -157,6 +177,30 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: DesignRadius.round,
     borderWidth: 1,
     borderColor: isDark ? colors.primary[300] : colors.primary[100],
+  },
+  languageToggle: {
+    flexDirection: 'row',
+    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : colors.neutral[100],
+    borderRadius: DesignRadius.round,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: isDark ? colors.neutral[700] : colors.neutral[200],
+  },
+  langBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: DesignRadius.round,
+  },
+  langBtnActive: {
+    backgroundColor: colors.primary[500],
+  },
+  langText: {
+    ...DesignTextStyles.labelSmall,
+    color: colors.neutral[500],
+    fontWeight: '600',
+  },
+  langTextActive: {
+    color: colors.neutral[0],
   },
   brandingIcon: {
     fontSize: 14,

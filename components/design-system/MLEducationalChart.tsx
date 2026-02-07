@@ -3,10 +3,11 @@
  * Interactive chart with learning overlays
  */
 
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
-import Svg, { Path, Line, Rect, G, Circle, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { DesignColors, DesignSpacing, DesignTextStyles, DesignRadius } from '../../constants/design-system';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
+import { DesignColors, DesignRadius, DesignSpacing, DesignTextStyles } from '../../constants/design-system';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 48;
@@ -31,6 +32,7 @@ const generateChartData = (timeframe: ChartTimeframe) => {
 };
 
 export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSymbol, onTimeframeChange }) => {
+  const { t } = useStockLanguage();
   const [timeframe, setTimeframe] = useState<ChartTimeframe>('1M');
   const [learningMode, setLearningMode] = useState(true);
   const [activeLesson, setActiveLesson] = useState<number>(0);
@@ -64,10 +66,11 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
   const volatileStart = 6;
   const volatileEnd = 10;
 
+  const lessonsData = t('charts.component.lessons') as any[];
   const lessons = [
-    { title: 'Upward Trend', desc: 'Price rising over time - buyers dominate', color: DesignColors.secondary[400], start: upTrendStart, end: upTrendEnd },
-    { title: 'Downward Trend', desc: 'Price falling - sellers dominate', color: DesignColors.semantic.negative.main, start: downTrendStart, end: downTrendEnd },
-    { title: 'High Volatility', desc: 'Big swings - uncertain market', color: DesignColors.semantic.warning.main, start: volatileStart, end: volatileEnd },
+    { ...lessonsData[0], color: DesignColors.secondary[400], start: upTrendStart, end: upTrendEnd },
+    { ...lessonsData[1], color: DesignColors.semantic.negative.main, start: downTrendStart, end: downTrendEnd },
+    { ...lessonsData[2], color: DesignColors.semantic.warning.main, start: volatileStart, end: volatileEnd },
   ];
 
   return (
@@ -82,7 +85,9 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
           style={[styles.learningToggle, learningMode && styles.learningToggleActive]}
           onPress={() => setLearningMode(!learningMode)}
         >
-          <Text style={styles.learningToggleText}>{learningMode ? '🎓 Learning ON' : '🎓 Learning OFF'}</Text>
+          <Text style={styles.learningToggleText}>
+            {learningMode ? t('charts.component.learningOn') : t('charts.component.learningOff')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -171,11 +176,11 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
           )}
 
           {/* X-axis labels */}
-          <SvgText x="50" y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">Start</SvgText>
+          <SvgText x="50" y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">{t('charts.component.start')}</SvgText>
           <SvgText x={CHART_WIDTH / 2} y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">
-            {timeframe === '1D' ? '12 PM' : timeframe === '1W' ? 'Mid' : timeframe === '1M' ? '15th' : '3M'}
+            {timeframe === '1D' ? '12 PM' : timeframe === '1W' ? t('charts.component.labels.mid') : timeframe === '1M' ? t('charts.component.labels.m15') : t('charts.component.labels.m3')}
           </SvgText>
-          <SvgText x={CHART_WIDTH - 30} y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">Now</SvgText>
+          <SvgText x={CHART_WIDTH - 30} y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">{t('charts.component.now')}</SvgText>
         </Svg>
       </View>
 
@@ -206,8 +211,7 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
               <View style={styles.explanationBox}>
                 <Text style={styles.explanationIcon}>📈</Text>
                 <Text style={styles.explanationText}>
-                  <Text style={{ color: DesignColors.secondary[500], fontWeight: '600' }}>Green movement</Text> = Price is going UP{'\n'}
-                  More people want to BUY the stock
+                  {t('charts.component.explanations.up')}
                 </Text>
               </View>
             )}
@@ -215,8 +219,7 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
               <View style={styles.explanationBox}>
                 <Text style={styles.explanationIcon}>📉</Text>
                 <Text style={styles.explanationText}>
-                  <Text style={{ color: DesignColors.semantic.negative.main, fontWeight: '600' }}>Red movement</Text> = Price is going DOWN{'\n'}
-                  More people want to SELL the stock
+                  {t('charts.component.explanations.down')}
                 </Text>
               </View>
             )}
@@ -224,8 +227,7 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
               <View style={styles.explanationBox}>
                 <Text style={styles.explanationIcon}>⚡</Text>
                 <Text style={styles.explanationText}>
-                  <Text style={{ color: DesignColors.semantic.warning.main, fontWeight: '600' }}>High volatility</Text> = Big price swings{'\n'}
-                  Market is uncertain - news, events, or emotions driving trades
+                  {t('charts.component.explanations.volatile')}
                 </Text>
               </View>
             )}
@@ -233,12 +235,11 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
 
           {/* Why Prices Move */}
           <View style={styles.whyCard}>
-            <Text style={styles.whyTitle}>💡 Why do prices fluctuate?</Text>
+            <Text style={styles.whyTitle}>{t('charts.component.whyTitle')}</Text>
             <View style={styles.whyList}>
-              <Text style={styles.whyItem}>• Supply & Demand - more buyers = price up</Text>
-              <Text style={styles.whyItem}>• Company news - good results = price up</Text>
-              <Text style={styles.whyItem}>• Market mood - fear or excitement spreads</Text>
-              <Text style={styles.whyItem}>• Global events - affects all stocks</Text>
+              {(t('charts.component.whyList') as string[]).map((item, i) => (
+                <Text key={i} style={styles.whyItem}>• {item}</Text>
+              ))}
             </View>
           </View>
         </View>

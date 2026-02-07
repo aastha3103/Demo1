@@ -11,7 +11,9 @@ import {
   WBLButton
 } from '@/components/mf_sip/design-system';
 import { LESSONS, LearnCard, Lesson } from '@/constants/mf_sip/lesson-data';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
+import { markLessonComplete } from '@/utils/mf_sip/lessonProgress';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -43,6 +45,7 @@ interface LessonRunnerProps {
 
 const LessonRunner: React.FC<LessonRunnerProps> = ({ lesson, onFinish, onExit }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const totalCards = lesson.cards.length;
@@ -87,7 +90,11 @@ const LessonRunner: React.FC<LessonRunnerProps> = ({ lesson, onFinish, onExit })
           <View style={styles.progTrack}>
             <Animated.View style={[styles.progFill, progressStyle]} />
           </View>
-          <Text style={styles.progText}>Card {currentCardIndex + 1} of {totalCards}</Text>
+          <Text style={styles.progText}>
+            {t('learnMode.cardProgress')
+              .replace('{current}', (currentCardIndex + 1).toString())
+              .replace('{total}', totalCards.toString())}
+          </Text>
         </View>
 
         <TouchableOpacity onPress={onExit} style={styles.closeButton}>
@@ -108,15 +115,27 @@ const LessonRunner: React.FC<LessonRunnerProps> = ({ lesson, onFinish, onExit })
           </View>
 
           <View style={styles.cardTextContent}>
-            <Text style={styles.cardTitle}>{card.title}</Text>
-            <Text style={styles.cardDescription}>{card.description}</Text>
+            <Text style={styles.cardTitle}>
+              {t(`lessons.l${lesson.id}.cards.${currentCardIndex}.title`).startsWith('lessons.')
+                ? card.title
+                : t(`lessons.l${lesson.id}.cards.${currentCardIndex}.title`)}
+            </Text>
+            <Text style={styles.cardDescription}>
+              {t(`lessons.l${lesson.id}.cards.${currentCardIndex}.desc`).startsWith('lessons.')
+                ? card.description
+                : t(`lessons.l${lesson.id}.cards.${currentCardIndex}.desc`)}
+            </Text>
 
             {card.ruralExample && (
               <View style={styles.ruralExampleBox}>
                 <Text style={styles.ruralIcon}>🏘️</Text>
                 <View style={styles.ruralTextInner}>
-                  <Text style={styles.ruralTitle}>Relatable Example</Text>
-                  <Text style={styles.ruralDescription}>{card.ruralExample}</Text>
+                  <Text style={styles.ruralTitle}>{t('lessons.ruralExampleTitle') || 'Relatable Example'}</Text>
+                  <Text style={styles.ruralDescription}>
+                    {t(`lessons.l${lesson.id}.cards.${currentCardIndex}.rural`).startsWith('lessons.')
+                      ? card.ruralExample
+                      : t(`lessons.l${lesson.id}.cards.${currentCardIndex}.rural`)}
+                  </Text>
                 </View>
               </View>
             )}
@@ -127,7 +146,7 @@ const LessonRunner: React.FC<LessonRunnerProps> = ({ lesson, onFinish, onExit })
       {/* Bottom CTA */}
       <View style={styles.runnerFooter}>
         <WBLButton
-          title={isLastCard ? "Finish Lesson" : "Continue"}
+          title={isLastCard ? t('learnMode.finish') : t('learnMode.continue')}
           variant="primary"
           size="large"
           fullWidth
@@ -151,7 +170,9 @@ export default function LearnModeScreen() {
   // Find the lesson based on lessonId
   const lesson = LESSONS.find(l => l.id === lessonId) || LESSONS[0];
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    // Mark the lesson as complete in AsyncStorage
+    await markLessonComplete(lesson.id);
     // Navigate back to the hub
     router.replace('/mf_sip/(tabs)/home');
   };

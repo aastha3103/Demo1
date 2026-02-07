@@ -17,9 +17,11 @@ import {
   WBLProgressBar
 } from '@/components/mf_sip/design-system';
 import { CATEGORIES, Lesson, LESSONS } from '@/constants/mf_sip/lesson-data';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { getLessonProgress } from '@/utils/mf_sip/lessonProgress';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   Dimensions,
   SafeAreaView,
@@ -41,49 +43,53 @@ interface LessonCardProps {
   lesson: Lesson;
   onPress: () => void;
   index: number;
+  isCompleted: boolean;
 }
 
-const LessonCard: React.FC<LessonCardProps> = ({ lesson, onPress, index }) => {
+const LessonCard: React.FC<LessonCardProps> = ({ lesson, onPress, index, isCompleted }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
 
   return (
     <WBLEntrance delay={index * 20} direction="up">
       <TouchableOpacity
-        style={styles.moduleCard}
+        style={[styles.moduleCard, isCompleted && styles.moduleCardCompleted]}
         onPress={onPress}
         activeOpacity={0.8}
       >
         {/* Icon Section */}
-        <View style={styles.moduleIconContainer}>
-          <Text style={styles.moduleIcon}>{lesson.icon}</Text>
+        <View style={[styles.moduleIconContainer, isCompleted && styles.moduleIconCompleted]}>
+          <Text style={styles.moduleIcon}>{isCompleted ? '✅' : lesson.icon}</Text>
         </View>
 
         {/* Content Section */}
         <View style={styles.moduleContent}>
-          <Text style={styles.moduleCategory}>{lesson.category}</Text>
+          <Text style={styles.moduleCategory}>{t(`home.categories.${lesson.category.toLowerCase()}`)}</Text>
           <Text style={styles.moduleTitle}>
-            {lesson.title}
+            {t(`lessons.l${lesson.id}.title`).startsWith('lessons.') ? lesson.title : t(`lessons.l${lesson.id}.title`)}
           </Text>
           <Text style={styles.moduleDescription} numberOfLines={2}>
-            {lesson.shortDesc}
+            {t(`lessons.l${lesson.id}.shortDesc`).startsWith('lessons.') ? lesson.shortDesc : t(`lessons.l${lesson.id}.shortDesc`)}
           </Text>
 
           <View style={styles.progressSection}>
             <WBLProgressBar
-              progress={0}
+              progress={isCompleted ? 100 : 0}
               variant="primary"
               size="small"
             />
             <Text style={styles.lessonsText}>
-              {lesson.cards.length} cards in this lesson
+              {isCompleted
+                ? t('home.completed') || 'Completed ✓'
+                : t('home.cardsInLesson').replace('{count}', lesson.cards.length.toString())}
             </Text>
           </View>
         </View>
 
         {/* Arrow */}
         <View style={styles.moduleArrow}>
-          <Text style={styles.arrowText}>→</Text>
+          <Text style={styles.arrowText}>{isCompleted ? '↺' : '→'}</Text>
         </View>
       </TouchableOpacity>
     </WBLEntrance>
@@ -96,10 +102,26 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onPress, index }) => {
 
 export default function HomeScreen() {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const router = useRouter();
 
   const [activeCategory, setActiveCategory] = useState('All');
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [overallProgress, setOverallProgress] = useState(0);
+
+  // Load progress when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const loadProgress = async () => {
+        const progress = await getLessonProgress();
+        setCompletedLessons(progress.completedLessons);
+        const progressPercent = Math.round((progress.completedLessons.length / LESSONS.length) * 100);
+        setOverallProgress(progressPercent);
+      };
+      loadProgress();
+    }, [])
+  );
 
   const filteredLessons = activeCategory === 'All'
     ? LESSONS
@@ -125,27 +147,27 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Start Building Wealth! 👋</Text>
-              <Text style={styles.headerTitle}>Learning Center</Text>
+              <Text style={styles.greeting}>{t('home.greeting')}</Text>
+              <Text style={styles.headerTitle}>{t('home.title')}</Text>
             </View>
             <View style={styles.streakBadge}>
               <Text style={styles.streakEmoji}>✨</Text>
-              <Text style={styles.streakText}>Premium</Text>
+              <Text style={styles.streakText}>{t('common.premium')}</Text>
             </View>
           </View>
 
           <View style={styles.progressCard}>
             <View style={styles.progressCardHeader}>
-              <Text style={styles.progressCardTitle}>Overall Wisdom Progress</Text>
-              <Text style={styles.progressCardPercent}>0%</Text>
+              <Text style={styles.progressCardTitle}>{t('home.overallProgress')}</Text>
+              <Text style={styles.progressCardPercent}>{overallProgress}%</Text>
             </View>
             <WBLProgressBar
-              progress={0}
+              progress={overallProgress}
               variant="primary"
               size="medium"
             />
             <Text style={styles.progressCardSubtext}>
-              0 of {LESSONS.length} lessons mastered
+              {t('home.lessonsMastered').replace('{current}', completedLessons.length.toString()).replace('{total}', LESSONS.length.toString())}
             </Text>
           </View>
         </View>
@@ -165,7 +187,7 @@ export default function HomeScreen() {
                 <Text style={[
                   styles.categoryText,
                   activeCategory === cat && styles.categoryTextActive
-                ]}>{cat}</Text>
+                ]}>{t(`home.categories.${cat.toLowerCase()}`)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -174,8 +196,8 @@ export default function HomeScreen() {
         {/* Lessons Section */}
         <View style={styles.modulesSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{activeCategory} Lessons</Text>
-            <Text style={styles.lessonCount}>{filteredLessons.length} available</Text>
+            <Text style={styles.sectionTitle}>{t('home.lessonHeader').replace('{category}', t(`home.categories.${activeCategory.toLowerCase()}`))}</Text>
+            <Text style={styles.lessonCount}>{t('home.available').replace('{count}', filteredLessons.length.toString())}</Text>
           </View>
 
           <View style={styles.modulesList}>
@@ -184,6 +206,7 @@ export default function HomeScreen() {
                 key={lesson.id}
                 lesson={lesson}
                 index={index}
+                isCompleted={completedLessons.includes(lesson.id)}
                 onPress={() => handleLessonPress(lesson.id)}
               />
             ))}
@@ -197,9 +220,9 @@ export default function HomeScreen() {
               <View style={styles.tipContent}>
                 <Text style={styles.tipEmoji}>🚀</Text>
                 <View style={styles.tipTextContainer}>
-                  <Text style={styles.tipTitle}>Practice What You Learn</Text>
+                  <Text style={styles.tipTitle}>{t('home.practiceTitle')}</Text>
                   <Text style={styles.tipText}>
-                    Ready to grow your money? Try the Wealth Simulator and see your investments multiply!
+                    {t('home.practiceText')}
                   </Text>
                 </View>
               </View>
@@ -375,6 +398,9 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   moduleIcon: {
     fontSize: 32,
   },
+  moduleIconCompleted: {
+    backgroundColor: colors.accent[100],
+  },
   moduleContent: {
     flex: 1,
   },
@@ -391,6 +417,10 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
     color: colors.neutral[900],
     marginBottom: 4,
+  },
+  moduleCardCompleted: {
+    borderColor: colors.accent[200],
+    backgroundColor: colors.accent[50],
   },
   moduleDescription: {
     ...DesignTextStyles.bodySmall,

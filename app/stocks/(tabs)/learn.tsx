@@ -13,6 +13,7 @@ import {
   MLCard,
   MLLearningCard
 } from '@/components/design-system';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -26,6 +27,7 @@ import {
 
 export default function LearnTab() {
   const router = useRouter();
+  const { t } = useStockLanguage();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -38,31 +40,31 @@ export default function LearnTab() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Learn</Text>
-          <Text style={styles.subtitle}>Stock Market Education</Text>
+          <Text style={styles.title}>{t('tabs.learn.title')}</Text>
+          <Text style={styles.subtitle}>{t('tabs.learn.subtitle')}</Text>
         </View>
 
         {/* Progress Overview */}
         <MLCard variant="glass" style={styles.progressCard}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Your Progress</Text>
+            <Text style={styles.progressTitle}>{t('tabs.learn.yourProgress')}</Text>
             <Text style={styles.progressPercent}>60%</Text>
           </View>
           <View style={styles.progressTrack}>
             <View style={[styles.progressBar, { width: '60%' }]} />
           </View>
-          <Text style={styles.progressSubtext}>3 of 5 lessons completed</Text>
+          <Text style={styles.progressSubtext}>{t('tabs.learn.lessonsCompleted').replace('{current}', '3').replace('{total}', '5')}</Text>
         </MLCard>
 
         {/* Learning Path */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📚 Learning Path</Text>
+          <Text style={styles.sectionTitle}>{t('tabs.learn.pathTitle')}</Text>
 
           <View style={styles.lessonsList}>
             <MLLearningCard
               type="lesson"
-              title="What is a Stock?"
-              subtitle="Understanding company ownership"
+              title={t('tabs.learn.lessons.basics.title')}
+              subtitle={t('tabs.learn.lessons.basics.subtitle')}
               duration="5 min"
               isCompleted={true}
               onPress={() => router.push('/stocks/learn-mode')}
@@ -70,8 +72,8 @@ export default function LearnTab() {
 
             <MLLearningCard
               type="concept"
-              title="Reading Price Charts"
-              subtitle="How to analyze stock movements"
+              title={t('tabs.learn.lessons.charts.title')}
+              subtitle={t('tabs.learn.lessons.charts.subtitle')}
               duration="8 min"
               isCompleted={true}
               onPress={() => router.push('/stocks/learn-mode')}
@@ -79,8 +81,8 @@ export default function LearnTab() {
 
             <MLLearningCard
               type="comparison"
-              title="Trading vs Investing"
-              subtitle="Know the key differences"
+              title={t('tabs.learn.lessons.vsi.title')}
+              subtitle={t('tabs.learn.lessons.vsi.subtitle')}
               duration="6 min"
               isCompleted={true}
               onPress={() => router.push('/stocks/learn-mode')}
@@ -88,8 +90,8 @@ export default function LearnTab() {
 
             <MLLearningCard
               type="simulation"
-              title="Practice Trading"
-              subtitle="Try the simulator with virtual money"
+              title={t('tabs.learn.lessons.practice.title')}
+              subtitle={t('tabs.learn.lessons.practice.subtitle')}
               duration="15 min"
               progress={60}
               onPress={() => router.push('/stocks/simulator')}
@@ -97,8 +99,8 @@ export default function LearnTab() {
 
             <MLLearningCard
               type="quiz"
-              title="Knowledge Check"
-              subtitle="Test what you've learned"
+              title={t('tabs.learn.lessons.quiz.title')}
+              subtitle={t('tabs.learn.lessons.quiz.subtitle')}
               duration="5 min"
               isLocked={true}
             />
@@ -107,19 +109,19 @@ export default function LearnTab() {
 
         {/* Quick Tips */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Quick Tips</Text>
+          <Text style={styles.sectionTitle}>{t('tabs.learn.quickTips')}</Text>
 
           <MLCard variant="outlined">
-            <Text style={styles.tipTitle}>📊 Charts show patterns</Text>
+            <Text style={styles.tipTitle}>{t('tabs.learn.tipTitle')}</Text>
             <Text style={styles.tipText}>
-              Look for trends over weeks and months, not minutes. Daily fluctuations are normal.
+              {t('tabs.learn.tipText')}
             </Text>
           </MLCard>
         </View>
 
         {/* CTA */}
         <MLButton
-          title="Continue Learning"
+          title={t('tabs.learn.continue')}
           variant="primary"
           size="large"
           fullWidth

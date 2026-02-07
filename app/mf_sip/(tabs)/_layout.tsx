@@ -13,6 +13,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { DesignColors, DesignSpacing } from '@/components/mf_sip/design-system';
 import { HapticTab } from '@/components/mf_sip/haptic-tab';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB ICON COMPONENT
@@ -36,6 +37,7 @@ const TabIcon: React.FC<TabIconProps> = ({ emoji, focused }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function TabLayout() {
+  const { t } = useMFLanguage();
   return (
     <Tabs
       screenOptions={{
@@ -50,21 +52,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Homepage',
+          title: t('tabs.home'),
           tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Learn',
+          title: t('tabs.learn'),
           tabBarIcon: ({ focused }) => <TabIcon emoji="📚" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="calculator"
         options={{
-          title: 'Calculator',
+          title: t('tabs.calculator'),
           tabBarIcon: ({ focused }) => <TabIcon emoji="🧮" focused={focused} />,
         }}
       />

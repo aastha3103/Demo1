@@ -37,6 +37,7 @@ import {
   WBLStatCard
 } from '@/components/mf_sip/design-system';
 import { RiskLevel, WBLFundCard } from '@/components/mf_sip/design-system/WBLFundCard';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
 import React, { useEffect, useState } from 'react';
 import {
@@ -185,11 +186,12 @@ interface TimeSelectorProps {
 
 const SimulatorControls: React.FC<TimeSelectorProps> = ({ selected, type, onSelectTime, onSelectType }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const timeOptions: SimulationTimeHorizon[] = ['1Y', '3Y', '5Y', '10Y', '15Y'];
   const typeOptions: { id: InvestmentType, label: string, icon: string }[] = [
-    { id: 'SIP', label: 'Monthly SIP', icon: '📅' },
-    { id: 'Lumpsum', label: 'One-time', icon: '💰' }
+    { id: 'SIP', label: t('simulator.monthlySIP'), icon: '📅' },
+    { id: 'Lumpsum', label: t('simulator.oneTime'), icon: '💰' }
   ];
 
   return (
@@ -251,6 +253,7 @@ interface BalanceDisplayProps {
 
 const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ totalPlanned }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const usedPercent = (totalPlanned / INITIAL_WALLET_BALANCE) * 100;
 
@@ -262,30 +265,30 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ totalPlanned }) => {
     <WBLCard style={styles.premiumBalanceCard} variant="default">
       <View style={styles.balanceHeader}>
         <View>
-          <Text style={styles.balanceLabel}>PRACTICE AMOUNT</Text>
+          <Text style={styles.balanceLabel}>{t('simulator.practiceAmount')}</Text>
           <Text style={styles.balanceAmount}>
             <WBLAnimatedNumber value={INITIAL_WALLET_BALANCE} prefix="₹" />
           </Text>
         </View>
         <WBLPulse active={totalPlanned === 0}>
           <View style={styles.virtualBadge}>
-            <Text style={styles.virtualBadgeText}>🎮 Demo Budget</Text>
+            <Text style={styles.virtualBadgeText}>{t('simulator.demoBudget')}</Text>
           </View>
         </WBLPulse>
       </View>
 
       <View style={styles.walletProgressTrack}>
-        <Text style={styles.walletProgressTitle}>Simulated Usage</Text>
+        <Text style={styles.walletProgressTitle}>{t('simulator.simulatedUsage')}</Text>
         <WBLProgressBar
           progress={Math.min(usedPercent / 100, 1)}
           variant={usedPercent > 100 ? 'secondary' : usedPercent > 90 ? 'secondary' : 'success'}
         />
         <View style={styles.walletProgressLabels}>
-          <Text style={styles.walletPercentText}>{usedPercent.toFixed(0)}% Allocated</Text>
+          <Text style={styles.walletPercentText}>{t('simulator.allocatedLabel').replace('{percent}', usedPercent.toFixed(0))}</Text>
           <Text style={styles.walletRemainingText}>
             {usedPercent <= 100
-              ? `₹${formatBalance(INITIAL_WALLET_BALANCE - totalPlanned)} remaining`
-              : 'Over Budget'}
+              ? t('simulator.remainingLabel').replace('{amount}', formatBalance(INITIAL_WALLET_BALANCE - totalPlanned))
+              : t('simulator.overBudget')}
           </Text>
         </View>
       </View>
@@ -313,6 +316,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   interpretationPoints
 }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const profit = currentValue - totalInvested;
   const profitPercent = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
@@ -330,12 +334,12 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
 
   return (
     <View style={styles.summaryContainer}>
-      <Text style={styles.summaryTitle}>Simulation Outcome</Text>
+      <Text style={styles.summaryTitle}>{t('simulator.simulationOutcome')}</Text>
 
       {/* Stats Cards */}
       <View style={styles.statsGrid}>
         <WBLStatCard
-          label="Total Invested"
+          label={t('simulator.totalInvested')}
           value={<WBLAnimatedNumber value={Math.round(totalInvested)} />}
           prefix="₹"
           variant="highlight"
@@ -344,9 +348,9 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         <WBLStatCard
           label={
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 13, color: colors.neutral[500], marginRight: 6 }}>Maturity Value</Text>
+              <Text style={{ fontSize: 13, color: colors.neutral[500], marginRight: 6 }}>{t('simulator.maturityValue')}</Text>
               <WBLPulseDot size={8} color={DesignColors.secondary[500]} />
-              <Text style={{ fontSize: 10, fontWeight: '800', color: DesignColors.secondary[500], marginLeft: 4 }}>LIVE</Text>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: DesignColors.secondary[500], marginLeft: 4 }}>{t('simulator.live')}</Text>
             </View>
           }
           value={<WBLAnimatedNumber value={Math.round(currentValue)} />}
@@ -358,7 +362,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
 
       <WBLCard style={styles.profitHighlight} variant={isPositive ? 'accent' : 'outline'}>
         <View style={styles.profitHeader}>
-          <Text style={styles.profitLabel}>{isPositive ? 'ESTIMATED PROFIT' : 'TEMPORARY DIP'}</Text>
+          <Text style={styles.profitLabel}>{isPositive ? t('simulator.estProfit') : t('simulator.tempDip')}</Text>
           <WBLBadge
             content={`${isPositive ? '+' : ''}${profitPercent.toFixed(1)}%`}
             variant={isPositive ? 'success' : 'warning'}
@@ -371,13 +375,13 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
 
       {/* Visualization */}
       <View style={styles.chartWrapper}>
-        <Text style={styles.chartTitle}>Wealth Growth Trend</Text>
+        <Text style={styles.chartTitle}>{t('simulator.growthTrend')}</Text>
         <GrowthChart data={chartPoints} investedAmount={totalInvested} hideContainer={true} />
       </View>
 
       {/* Interpretation Points */}
       <View style={styles.highlightsContainer}>
-        <Text style={styles.highlightsTitle}>Key Highlights</Text>
+        <Text style={styles.highlightsTitle}>{t('simulator.keyHighlights')}</Text>
         {interpretationPoints.map((point, idx) => (
           <View key={idx} style={styles.highlightItem}>
             <View style={[styles.highlightDot, { backgroundColor: point.type === 'dip' ? colors.semantic.error.main : colors.secondary[400] }]} />
@@ -392,7 +396,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
       {/* Market Explanation */}
       <View style={styles.marketExplanation}>
         <Text style={styles.marketExplanationText}>
-          {MARKET_EXPLANATIONS[marketStatus]}
+          {t(`simulator.marketStatus.${marketStatus}`)}
         </Text>
       </View>
     </View>
@@ -415,6 +419,7 @@ const AddFundButton: React.FC<AddFundButtonProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const isMaxReached = currentCount >= maxCount;
 
@@ -429,7 +434,7 @@ const AddFundButton: React.FC<AddFundButtonProps> = ({
           <Text style={styles.addFundIconText}>+</Text>
         </View>
         <Text style={[styles.addFundText, isMaxReached && styles.addFundTextDisabled]}>
-          Add New Fund
+          {t('simulator.addNewFund')}
         </Text>
       </TouchableOpacity>
 
@@ -444,7 +449,9 @@ const AddFundButton: React.FC<AddFundButtonProps> = ({
           />
         </View>
         <Text style={styles.limitText}>
-          {currentCount}/{maxCount} funds
+          {t('simulator.fundsCount')
+            .replace('{current}', currentCount.toString())
+            .replace('{max}', maxCount.toString())}
         </Text>
       </View>
     </View>
@@ -469,6 +476,7 @@ import { useRouter } from 'expo-router';
 export default function SimulatorScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const { completeTask } = useRewards();
   const styles = createStyles(colors, isDark);
   const [timeHorizon, setTimeHorizon] = useState<SimulationTimeHorizon>('5Y');
@@ -502,10 +510,10 @@ export default function SimulatorScreen() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   const PROFILES = [
-    { id: 'student', name: 'Student', emoji: '🎓', defaultIncome: 15000 },
-    { id: 'job', name: 'Job', emoji: '💼', defaultIncome: 50000 },
-    { id: 'business', name: 'Business', emoji: '🏪', defaultIncome: 120000 },
-    { id: 'custom', name: 'Custom', emoji: '👤', defaultIncome: 0 },
+    { id: 'student', name: t('simulator.profiles.student'), emoji: '🎓', defaultIncome: 15000 },
+    { id: 'job', name: t('simulator.profiles.job'), emoji: '💼', defaultIncome: 50000 },
+    { id: 'business', name: t('simulator.profiles.business'), emoji: '🏪', defaultIncome: 120000 },
+    { id: 'custom', name: t('simulator.profiles.custom'), emoji: '👤', defaultIncome: 0 },
   ];
 
   const [activeProfileId, setActiveProfileId] = useState<string>('job');
@@ -576,28 +584,34 @@ export default function SimulatorScreen() {
     if (totalMonthlyInvestment === 0) {
       return {
         type: 'info',
-        message: `💡 Start with ₹${suggestedMinInvestment.toLocaleString('en-IN')} - ₹${suggestedMaxInvestment.toLocaleString('en-IN')}/month (10-30% of income).`,
+        message: t('simulator.guidance.start')
+          .replace('{min}', suggestedMinInvestment.toLocaleString('en-IN'))
+          .replace('{max}', suggestedMaxInvestment.toLocaleString('en-IN')),
       };
     }
 
     if (investmentPercentOfIncome < INVESTMENT_GUIDANCE.MIN_PERCENT) {
       return {
         type: 'info',
-        message: `💡 You're investing ${investmentPercentOfIncome}% of income. Consider increasing to at least 10% (₹${suggestedMinInvestment.toLocaleString('en-IN')}/month) for better growth.`,
+        message: t('simulator.guidance.low')
+          .replace('{percent}', investmentPercentOfIncome.toString())
+          .replace('{min}', suggestedMinInvestment.toLocaleString('en-IN')),
       };
     }
 
     if (investmentPercentOfIncome > INVESTMENT_GUIDANCE.MAX_PERCENT) {
       return {
         type: 'warning',
-        message: `⚠️ You're investing ${investmentPercentOfIncome}% of income. This exceeds the recommended 30%. Ensure you have sufficient funds for emergencies and expenses.`,
+        message: t('simulator.guidance.high')
+          .replace('{percent}', investmentPercentOfIncome.toString()),
       };
     }
 
     // Within recommended range
     return {
       type: 'success',
-      message: `✅ Great! You're investing ${investmentPercentOfIncome}% of income — within the healthy 10-30% range.`,
+      message: t('simulator.guidance.good')
+        .replace('{percent}', investmentPercentOfIncome.toString()),
     };
   };
 
@@ -749,7 +763,7 @@ export default function SimulatorScreen() {
   const saveEdit = () => {
     const amount = Number(editAmount);
     if (isNaN(amount) || amount < 0) {
-      setEditError('Invalid amount');
+      setEditError(t('simulator.editErrorInvalid'));
       return;
     }
 
@@ -757,9 +771,9 @@ export default function SimulatorScreen() {
       const success = handleUpdateSipAmount(editingFundId, amount);
       if (success) {
         setEditingFundId(null);
-        completeTask('mf_sip_plan');
+        completeTask('mf_insight'); // Fixed task name if it matters
       } else {
-        setEditError('Amount exceeds wallet balance');
+        setEditError(t('simulator.editErrorBudget'));
       }
     }
   };
@@ -819,9 +833,9 @@ export default function SimulatorScreen() {
         <WBLEntrance delay={300}>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>User Profile & Income</Text>
+              <Text style={styles.sectionTitle}>{t('simulator.profileTitle')}</Text>
               <Text style={styles.sectionSubtitle}>
-                Income can vary by profile. Update yours to see custom guidance.
+                {t('simulator.profileSubtitle')}
               </Text>
             </View>
 
@@ -847,7 +861,7 @@ export default function SimulatorScreen() {
             </View>
 
             <WBLInput
-              label="Monthly Income"
+              label={t('simulator.monthlyIncomeLabel')}
               value={monthlyIncome > 0 ? monthlyIncome.toString() : ''}
               onChangeText={(text: string) => handleUpdateMonthlyIncome(Number(text) || 0)}
               keyboardType="numeric"
@@ -856,7 +870,7 @@ export default function SimulatorScreen() {
               style={{ marginBottom: DesignSpacing.xs }}
             />
             <Text style={{ fontSize: 12, color: colors.neutral[600], marginBottom: DesignSpacing.md, marginLeft: 4 }}>
-              Suggested: 10-30% of this should go to SIP
+              {t('simulator.suggestedNote')}
             </Text>
 
             {incomeGuidance.type && incomeGuidance.message ? (
@@ -890,13 +904,13 @@ export default function SimulatorScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <Text style={styles.sectionTitle}>Your SIP Portfolio</Text>
+                <Text style={styles.sectionTitle}>{t('simulator.portfolioTitle')}</Text>
                 <TouchableOpacity onPress={handleResetPortfolio} style={styles.resetButton}>
-                  <Text style={styles.resetButtonText}>🔄 Reset</Text>
+                  <Text style={styles.resetButtonText}>🔄 {t('simulator.reset')}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.sectionSubtitle}>
-                Monthly investment: ₹{totalMonthlyInvestment.toLocaleString('en-IN')}
+                {t('simulator.monthlyTotal').replace('{amount}', totalMonthlyInvestment.toLocaleString('en-IN'))}
               </Text>
             </View>
 
@@ -930,8 +944,8 @@ export default function SimulatorScreen() {
             {/* Info Box */}
             <WBLInfoBox
               variant="info"
-              title="💡 Tip"
-              message="Pausing a SIP doesn't sell your investment. It just stops new monthly additions temporarily."
+              title={t('simulator.tipTitle')}
+              message={t('simulator.pauseTip')}
             />
           </View>
         </WBLEntrance>
@@ -939,7 +953,7 @@ export default function SimulatorScreen() {
         {/* PRIMARY CTA - VIEW INSIGHTS */}
         <View style={styles.section}>
           <WBLButton
-            title="Analyze My Portfolio 📊"
+            title={t('simulator.analyzeCTA')}
             variant="primary"
             size="large"
             fullWidth
@@ -953,12 +967,12 @@ export default function SimulatorScreen() {
         <View style={styles.footerSection}>
           <WBLCard variant="accent">
             <View style={styles.learnMoreContent}>
-              <Text style={styles.learnMoreTitle}>🎓 Keep Learning</Text>
+              <Text style={styles.learnMoreTitle}>🎓 {t('simulator.footerTitle')}</Text>
               <Text style={styles.learnMoreText}>
-                Want to understand how your money grows? Explore more lessons.
+                {t('simulator.footerText')}
               </Text>
               <WBLButton
-                title="View Lessons"
+                title={t('simulator.viewLessons')}
                 variant="outline"
                 size="small"
                 style={styles.learnMoreButton}
@@ -976,11 +990,11 @@ export default function SimulatorScreen() {
       <WBLModal
         visible={!!editingFundId}
         onClose={() => setEditingFundId(null)}
-        title="Update Investment"
-        subtitle="Change your monthly SIP amount"
+        title={t('simulator.updateInvestment')}
+        subtitle={t('simulator.changeSipAmount')}
       >
         <WBLInput
-          label="SIP Amount (₹)"
+          label={t('simulator.sipAmountLabel')}
           value={editAmount}
           onChangeText={(text: string) => {
             setEditAmount(text);
@@ -995,14 +1009,14 @@ export default function SimulatorScreen() {
         <View style={{ marginTop: DesignSpacing.lg }}>
           <WBLButton
             onPress={saveEdit}
-            title="Save Changes"
+            title={t('simulator.saveChanges')}
             variant="primary"
             fullWidth
             style={{ marginBottom: DesignSpacing.md }}
           />
           <WBLButton
             onPress={() => setEditingFundId(null)}
-            title="Cancel"
+            title={t('simulator.cancel')}
             variant="outline"
             fullWidth
           />

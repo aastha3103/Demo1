@@ -23,6 +23,7 @@ import {
   StockChartIllustration,
 } from '@/components/design-system';
 import { useRewards } from '@/context/RewardContext';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
@@ -31,6 +32,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -39,6 +41,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function ModuleEntryScreen() {
   const router = useRouter();
   const { completeTask } = useRewards();
+  const { t, language, setLanguage } = useStockLanguage();
 
   useEffect(() => {
     // Complete 'Market Morning' task
@@ -60,8 +63,17 @@ export default function ModuleEntryScreen() {
         <View style={styles.brandingContainer}>
           <View style={styles.brandingBadge}>
             <Text style={styles.brandingIcon}>📚</Text>
-            <Text style={styles.brandingText}>FinLearn</Text>
+            <Text style={styles.brandingText}>{t('entry.branding')}</Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.langSwitch}
+            onPress={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+          >
+            <Text style={styles.langSwitchText}>
+              {language === 'en' ? 'हिन्दी' : 'English'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
@@ -75,23 +87,23 @@ export default function ModuleEntryScreen() {
 
           {/* Title Section */}
           <View style={styles.titleSection}>
-            <Text style={styles.mainTitle}>Market Lab</Text>
-            <Text style={styles.subtitle}>Learn how stock markets work</Text>
+            <Text style={styles.mainTitle}>{t('entry.title')}</Text>
+            <Text style={styles.subtitle}>{t('entry.subtitle')}</Text>
           </View>
 
           {/* Feature Pills */}
           <View style={styles.featurePills}>
             <View style={styles.pill}>
               <Text style={styles.pillIcon}>📊</Text>
-              <Text style={styles.pillText}>Read Charts</Text>
+              <Text style={styles.pillText}>{t('entry.features.charts')}</Text>
             </View>
             <View style={styles.pill}>
               <Text style={styles.pillIcon}>🎓</Text>
-              <Text style={styles.pillText}>Learn Basics</Text>
+              <Text style={styles.pillText}>{t('entry.features.basics')}</Text>
             </View>
             <View style={styles.pill}>
               <Text style={styles.pillIcon}>⚖️</Text>
-              <Text style={styles.pillText}>Compare</Text>
+              <Text style={styles.pillText}>{t('entry.features.compare')}</Text>
             </View>
           </View>
         </View>
@@ -104,16 +116,16 @@ export default function ModuleEntryScreen() {
           <View style={styles.disclaimerCard}>
             <Text style={styles.disclaimerIcon}>🎓</Text>
             <View style={styles.disclaimerContent}>
-              <Text style={styles.disclaimerTitle}>Educational Simulator</Text>
+              <Text style={styles.disclaimerTitle}>{t('entry.disclaimer.title')}</Text>
               <Text style={styles.disclaimerText}>
-                This is a learning tool, not real trading. No actual money is involved.
+                {t('entry.disclaimer.text')}
               </Text>
             </View>
           </View>
 
           {/* Primary CTA */}
           <MLButton
-            title="Start Learning"
+            title={t('entry.startLearning')}
             variant="primary"
             size="large"
             fullWidth
@@ -125,7 +137,7 @@ export default function ModuleEntryScreen() {
           <View style={styles.reassuranceContainer}>
             <View style={styles.reassuranceBadge}>
               <Text style={styles.reassuranceIcon}>🛡️</Text>
-              <Text style={styles.reassuranceText}>Safe learning environment</Text>
+              <Text style={styles.reassuranceText}>{t('entry.reassurance')}</Text>
             </View>
           </View>
         </View>
@@ -151,8 +163,23 @@ const styles = StyleSheet.create({
   // BRANDING
   // ─────────────────────────────────────────────────────────────────────────
   brandingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: DesignSpacing.lg,
+  },
+  langSwitch: {
+    backgroundColor: DesignColors.neutral[200],
+    paddingHorizontal: DesignSpacing.md,
+    paddingVertical: DesignSpacing.xs,
+    borderRadius: DesignRadius.md,
+    borderWidth: 1,
+    borderColor: DesignColors.neutral[300],
+  },
+  langSwitchText: {
+    ...DesignTextStyles.labelSmall,
+    color: DesignColors.neutral[700],
+    fontWeight: '600',
   },
   brandingBadge: {
     flexDirection: 'row',

@@ -16,6 +16,7 @@ import {
   MLInfoBox,
 } from '@/components/design-system';
 import { MLEducationalChart } from '@/components/design-system/MLEducationalChart';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
@@ -29,6 +30,7 @@ import { useRewards } from '../../context/RewardContext';
 
 export default function ChartViewScreen() {
   const router = useRouter();
+  const { t } = useStockLanguage();
   const { completeTask } = useRewards();
   const params = useLocalSearchParams();
 
@@ -42,7 +44,7 @@ export default function ChartViewScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <MLHeader
-        title="Read the Chart"
+        title={t('charts.title')}
         subtitle={stockSymbol}
         variant="default"
         onLeftAction={() => router.back()}
@@ -53,8 +55,8 @@ export default function ChartViewScreen() {
         <MLInfoBox
           variant="learn"
           icon="📊"
-          title="Chart Reading 101"
-          message="This chart shows how the stock price changes over time. Use the lessons below to understand patterns."
+          title={t('charts.intro.title')}
+          message={t('charts.intro.message')}
         />
 
         {/* Main Educational Chart */}
@@ -62,39 +64,39 @@ export default function ChartViewScreen() {
 
         {/* Quick Reference Card */}
         <MLCard variant="outlined">
-          <Text style={styles.refTitle}>📖 Quick Reference</Text>
+          <Text style={styles.refTitle}>{t('charts.quickRef')}</Text>
 
           <View style={styles.refGrid}>
             <View style={styles.refItem}>
               <View style={[styles.refIcon, { backgroundColor: `${DesignColors.secondary[400]}20` }]}>
                 <Text style={styles.refEmoji}>📈</Text>
               </View>
-              <Text style={styles.refLabel}>Rising</Text>
-              <Text style={styles.refDesc}>Buyers winning</Text>
+              <Text style={styles.refLabel}>{t('charts.rising')}</Text>
+              <Text style={styles.refDesc}>{t('charts.risingDesc')}</Text>
             </View>
 
             <View style={styles.refItem}>
               <View style={[styles.refIcon, { backgroundColor: `${DesignColors.semantic.negative.main}20` }]}>
                 <Text style={styles.refEmoji}>📉</Text>
               </View>
-              <Text style={styles.refLabel}>Falling</Text>
-              <Text style={styles.refDesc}>Sellers winning</Text>
+              <Text style={styles.refLabel}>{t('charts.falling')}</Text>
+              <Text style={styles.refDesc}>{t('charts.fallingDesc')}</Text>
             </View>
 
             <View style={styles.refItem}>
               <View style={[styles.refIcon, { backgroundColor: `${DesignColors.neutral[400]}20` }]}>
                 <Text style={styles.refEmoji}>↔️</Text>
               </View>
-              <Text style={styles.refLabel}>Sideways</Text>
-              <Text style={styles.refDesc}>Balanced</Text>
+              <Text style={styles.refLabel}>{t('charts.sideways')}</Text>
+              <Text style={styles.refDesc}>{t('charts.sidewaysDesc')}</Text>
             </View>
 
             <View style={styles.refItem}>
               <View style={[styles.refIcon, { backgroundColor: `${DesignColors.semantic.warning.main}20` }]}>
                 <Text style={styles.refEmoji}>⚡</Text>
               </View>
-              <Text style={styles.refLabel}>Volatile</Text>
-              <Text style={styles.refDesc}>Risky</Text>
+              <Text style={styles.refLabel}>{t('charts.volatile')}</Text>
+              <Text style={styles.refDesc}>{t('charts.volatileDesc')}</Text>
             </View>
           </View>
         </MLCard>
@@ -103,7 +105,7 @@ export default function ChartViewScreen() {
         <View style={styles.insight}>
           <Text style={styles.insightIcon}>🎯</Text>
           <Text style={styles.insightText}>
-            Focus on <Text style={{ fontWeight: '600' }}>long-term trends</Text>, not daily ups and downs!
+            {t('charts.insight')}
           </Text>
         </View>
       </ScrollView>
@@ -111,7 +113,7 @@ export default function ChartViewScreen() {
       {/* Bottom Action */}
       <View style={styles.actionSection}>
         <MLButton
-          title="Start Trading Practice"
+          title={t('charts.startPractice')}
           variant="primary"
           size="large"
           fullWidth

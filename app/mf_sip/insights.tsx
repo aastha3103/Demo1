@@ -32,6 +32,7 @@ import {
   GrowthChart,
   SIPvsLumpsumChart,
 } from '@/components/mf_sip/design-system/InsightsVisualizations';
+import { useMFLanguage } from '@/context/MFLanguageContext';
 import { useDesignTheme } from '@/hooks/mf_sip/use-design-theme';
 import React, { useState } from 'react';
 import {
@@ -59,12 +60,6 @@ interface Tab {
   icon: string;
 }
 
-const TABS: Tab[] = [
-  { id: 'growth', label: 'Growth', icon: '📈' },
-  { id: 'compare', label: 'Compare', icon: '⚖️' },
-  { id: 'behavior', label: 'Behavior', icon: '🎯' },
-];
-
 // Sample growth data (10 years)
 const GROWTH_DATA = [
   { year: 1, value: 62000 },
@@ -79,42 +74,6 @@ const GROWTH_DATA = [
   { year: 10, value: 1180000 },
 ];
 
-// Behavior metrics (encouraging, non-judgmental)
-const BEHAVIOR_METRICS = [
-  {
-    id: '1',
-    icon: '📅',
-    title: 'Consistency',
-    value: '10 of 12 months invested',
-    feedback: "Great job staying consistent! Regular investing, even small amounts, builds wealth over time.",
-    isPositive: true,
-  },
-  {
-    id: '2',
-    icon: '⏸️',
-    title: 'Pause Usage',
-    value: '1 fund paused briefly',
-    feedback: "You paused once — that's okay! Life happens. The key is that you resumed. That shows commitment.",
-    isPositive: true,
-  },
-  {
-    id: '3',
-    icon: '🎢',
-    title: 'Market Dips',
-    value: 'Stayed invested during 2 dips',
-    feedback: "You didn't panic during market dips. That's exactly what successful long-term investors do!",
-    isPositive: true,
-  },
-  {
-    id: '4',
-    icon: '📚',
-    title: 'Learning',
-    value: '8 lessons completed',
-    feedback: "You're building knowledge alongside wealth. Understanding what you're doing makes you a confident investor.",
-    isPositive: true,
-  },
-];
-
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB BAR COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -126,7 +85,15 @@ interface TabBarProps {
 
 const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange }) => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
+
+  const TABS: Tab[] = [
+    { id: 'growth', label: t('insights.tabs.growth'), icon: '📈' },
+    { id: 'compare', label: t('insights.tabs.compare'), icon: '⚖️' },
+    { id: 'behavior', label: t('insights.tabs.behavior'), icon: '🎯' },
+  ];
+
   return (
     <View style={styles.tabBar}>
       {TABS.map((tab) => (
@@ -157,6 +124,7 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange }) => {
 
 const GrowthTab: React.FC = () => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const investedAmount = 600000; // ₹5000 x 12 months x 10 years
   const currentValue = 1180000;
@@ -175,11 +143,11 @@ const GrowthTab: React.FC = () => {
       <WBLEntrance delay={100}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>You Invested</Text>
+            <Text style={styles.summaryLabel}>{t('insights.summary.invested')}</Text>
             <Text style={styles.summaryValue}>{formatAmount(investedAmount)}</Text>
           </View>
           <View style={[styles.summaryCard, styles.summaryCardHighlight]}>
-            <Text style={styles.summaryLabel}>It Became</Text>
+            <Text style={styles.summaryLabel}>{t('insights.summary.became')}</Text>
             <Text style={[styles.summaryValue, styles.summaryValueHighlight]}>
               {formatAmount(currentValue)}
             </Text>
@@ -190,18 +158,18 @@ const GrowthTab: React.FC = () => {
       {/* Growth Highlight */}
       <WBLEntrance delay={300}>
         <View style={styles.growthHighlight}>
-          <Text style={styles.growthLabel}>Your money grew by</Text>
+          <Text style={styles.growthLabel}>{t('insights.summary.growthHighlight')}</Text>
           <Text style={styles.growthValue}>
             +₹<WBLAnimatedNumber value={growth} />
           </Text>
-          <Text style={styles.growthPercent}>That's almost 2x your investment! 🎉</Text>
+          <Text style={styles.growthPercent}>{t('insights.summary.growthNote')}</Text>
         </View>
       </WBLEntrance>
 
       {/* Chart */}
       <WBLEntrance delay={500}>
         <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>📊 Your 10-Year Journey</Text>
+          <Text style={styles.sectionTitle}>{t('insights.growth.chartTitle')}</Text>
           <GrowthChart data={GROWTH_DATA} investedAmount={investedAmount} />
         </View>
       </WBLEntrance>
@@ -209,10 +177,9 @@ const GrowthTab: React.FC = () => {
       {/* Explanation */}
       <WBLCard variant="accent">
         <View style={styles.explanationContent}>
-          <Text style={styles.explanationTitle}>🌱 What happened here?</Text>
+          <Text style={styles.explanationTitle}>{t('insights.growth.explanationTitle')}</Text>
           <Text style={styles.explanationText}>
-            Your ₹5,000 monthly SIP kept growing because of <Text style={styles.bold}>compounding</Text> —
-            your returns started earning their own returns! The longer you stay invested, the faster this growth becomes.
+            {t('insights.growth.explanationText')}
           </Text>
         </View>
       </WBLCard>
@@ -226,14 +193,15 @@ const GrowthTab: React.FC = () => {
 
 const CompareTab: React.FC = () => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   return (
     <View style={styles.tabContent}>
       {/* SIP vs Lumpsum */}
       <View style={styles.comparisonSection}>
-        <Text style={styles.sectionTitle}>📊 SIP vs One-Time Investment</Text>
+        <Text style={styles.sectionTitle}>{t('insights.compare.sipVsLumpsum')}</Text>
         <Text style={styles.sectionSubtitle}>
-          What if you invested ₹60,000 all at once vs ₹5,000 monthly?
+          {t('insights.compare.sipVsLumpsumSub')}
         </Text>
         <SIPvsLumpsumChart
           sipValue={72000}
@@ -244,9 +212,9 @@ const CompareTab: React.FC = () => {
 
       {/* Early vs Late */}
       <View style={styles.comparisonSection}>
-        <Text style={styles.sectionTitle}>⏰ The Power of Starting Early</Text>
+        <Text style={styles.sectionTitle}>{t('insights.compare.earlyVsLate')}</Text>
         <Text style={styles.sectionSubtitle}>
-          Same ₹5,000/month, but starting 10 years apart
+          {t('insights.compare.earlyVsLateSub')}
         </Text>
         <EarlyVsLateChart
           earlyStartValue={1180000}
@@ -261,10 +229,9 @@ const CompareTab: React.FC = () => {
         <View style={styles.takeawayContent}>
           <Text style={styles.takeawayEmoji}>💎</Text>
           <View style={styles.takeawayTextContainer}>
-            <Text style={styles.takeawayTitle}>Key Takeaway</Text>
+            <Text style={styles.takeawayTitle}>{t('insights.compare.takeawayTitle')}</Text>
             <Text style={styles.takeawayText}>
-              Don't wait to start. Don't try to time the market. Just start and stay consistent —
-              that's the real secret to building wealth.
+              {t('insights.compare.takeawayText')}
             </Text>
           </View>
         </View>
@@ -279,29 +246,67 @@ const CompareTab: React.FC = () => {
 
 const BehaviorTab: React.FC = () => {
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
+
+  const metrics = [
+    {
+      id: '1',
+      icon: '📅',
+      title: t('insights.behavior.consistency.title'),
+      value: t('insights.behavior.consistency.value')
+        .replace('{invested}', '10')
+        .replace('{total}', '12'),
+      feedback: t('insights.behavior.consistency.feedback'),
+      isPositive: true,
+    },
+    {
+      id: '2',
+      icon: '⏸️',
+      title: t('insights.behavior.pause.title'),
+      value: t('insights.behavior.pause.value').replace('{count}', '1'),
+      feedback: t('insights.behavior.pause.feedback'),
+      isPositive: true,
+    },
+    {
+      id: '3',
+      icon: '🎢',
+      title: t('insights.behavior.marketDips.title'),
+      value: t('insights.behavior.marketDips.value').replace('{count}', '2'),
+      feedback: t('insights.behavior.marketDips.feedback'),
+      isPositive: true,
+    },
+    {
+      id: '4',
+      icon: '📚',
+      title: t('insights.behavior.learning.title'),
+      value: t('insights.behavior.learning.value').replace('{count}', '8'),
+      feedback: t('insights.behavior.learning.feedback'),
+      isPositive: true,
+    },
+  ];
+
   return (
     <View style={styles.tabContent}>
       {/* Header */}
       <View style={styles.behaviorHeader}>
-        <Text style={styles.behaviorTitle}>Your Investor Journey</Text>
+        <Text style={styles.behaviorTitle}>{t('insights.behavior.title')}</Text>
         <Text style={styles.behaviorSubtitle}>
-          Here's how you did in the simulation. Remember, there's no right or wrong —
-          it's all about learning!
+          {t('insights.behavior.subtitle')}
         </Text>
       </View>
 
       {/* Behavior Feedback */}
-      <BehaviorFeedback metrics={BEHAVIOR_METRICS} overallScore={85} />
+      <BehaviorFeedback metrics={metrics} overallScore={85} />
 
       {/* Words of Wisdom */}
       <View style={styles.wisdomSection}>
-        <Text style={styles.wisdomTitle}>📖 Words of Wisdom</Text>
+        <Text style={styles.wisdomTitle}>{t('insights.behavior.wisdomTitle')}</Text>
         <View style={styles.wisdomCard}>
           <Text style={styles.wisdomQuote}>
-            "The stock market is a device for transferring money from the impatient to the patient."
+            {t('insights.behavior.wisdomQuote')}
           </Text>
-          <Text style={styles.wisdomAuthor}>— Warren Buffett</Text>
+          <Text style={styles.wisdomAuthor}>{t('insights.behavior.wisdomAuthor')}</Text>
         </View>
       </View>
     </View>
@@ -319,6 +324,7 @@ import { useEffect } from 'react';
 export default function InsightsScreen() {
   const router = useRouter();
   const { colors, isDark } = useDesignTheme();
+  const { t } = useMFLanguage();
   const styles = createStyles(colors, isDark);
   const [activeTab, setActiveTab] = useState<TabId>('growth');
   const { completeTask } = useRewards();
@@ -352,9 +358,9 @@ export default function InsightsScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Insights</Text>
+        <Text style={styles.headerTitle}>{t('insights.title')}</Text>
         <Text style={styles.headerSubtitle}>
-          See how your simulation went
+          {t('insights.subtitle')}
         </Text>
       </View>
 
@@ -372,7 +378,7 @@ export default function InsightsScreen() {
         {/* Final CTA */}
         <View style={styles.ctaSection}>
           <WBLButton
-            title="Return to FinLearn"
+            title={t('insights.cta.back')}
             variant="primary"
             size="large"
             fullWidth
@@ -380,7 +386,7 @@ export default function InsightsScreen() {
             style={styles.ctaButton}
           />
           <Text style={styles.ctaHint}>
-            Continue your learning journey 🚀
+            {t('insights.cta.hint')}
           </Text>
         </View>
 

@@ -19,6 +19,7 @@ import {
   MLHeader,
   MLInfoBox,
 } from '@/components/design-system';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -36,6 +37,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function InsightsScreen() {
   const router = useRouter();
+  const { t } = useStockLanguage();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,8 +45,8 @@ export default function InsightsScreen() {
 
       {/* Header */}
       <MLHeader
-        title="Insights"
-        subtitle="Your Learning Progress"
+        title={t('insights.title')}
+        subtitle={t('insights.subtitle')}
         variant="default"
         leftIcon="←"
         onLeftAction={() => router.back()}
@@ -57,13 +59,13 @@ export default function InsightsScreen() {
       >
         {/* Learning Progress */}
         <MLCard variant="glass" style={styles.progressCard}>
-          <Text style={styles.sectionTitle}>📚 Learning Progress</Text>
+          <Text style={styles.sectionTitle}>{t('insights.progress')}</Text>
 
           <View style={styles.progressItems}>
-            <ProgressItem label="Stock Basics" progress={100} completed />
-            <ProgressItem label="Reading Charts" progress={100} completed />
-            <ProgressItem label="Trading vs Investing" progress={100} completed />
-            <ProgressItem label="Practice Trading" progress={60} />
+            <ProgressItem label={t('insights.progressItems.basics')} progress={100} completed />
+            <ProgressItem label={t('insights.progressItems.charts')} progress={100} completed />
+            <ProgressItem label={t('insights.progressItems.vsi')} progress={100} completed />
+            <ProgressItem label={t('insights.progressItems.practice')} progress={60} />
           </View>
         </MLCard>
 
@@ -71,14 +73,14 @@ export default function InsightsScreen() {
         <MLInfoBox
           variant="compare"
           icon="⚖️"
-          title="Key Insight"
-          message="Stock trading requires constant monitoring and carries higher risk. Mutual fund investing (like SIPs) is more suitable for long-term wealth building."
+          title={t('insights.keyInsight.title')}
+          message={t('insights.keyInsight.message')}
         />
 
         {/* Trading vs Investing Chart */}
         <MLCard variant="outlined">
-          <Text style={styles.sectionTitle}>📊 Risk vs Reward Comparison</Text>
-          <Text style={styles.sectionSubtitle}>Understanding the difference</Text>
+          <Text style={styles.sectionTitle}>{t('insights.riskReward')}</Text>
+          <Text style={styles.sectionSubtitle}>{t('insights.riskRewardSub')}</Text>
 
           <View style={styles.comparisonChart}>
             <Svg width={SCREEN_WIDTH - 80} height={200} viewBox="0 0 280 200">
@@ -88,21 +90,21 @@ export default function InsightsScreen() {
 
               {/* Y-axis label */}
               <G transform="translate(20, 90) rotate(-90)">
-                <SvgText fill={DesignColors.neutral[500]} fontSize="11" textAnchor="middle">Returns / Risk</SvgText>
+                <SvgText fill={DesignColors.neutral[500]} fontSize="11" textAnchor="middle">{t('insights.yAxisLabel')}</SvgText>
               </G>
 
               {/* X-axis label */}
-              <SvgText x="160" y="185" fill={DesignColors.neutral[500]} fontSize="11" textAnchor="middle">Time Horizon</SvgText>
+              <SvgText x="160" y="185" fill={DesignColors.neutral[500]} fontSize="11" textAnchor="middle">{t('insights.xAxisLabel')}</SvgText>
 
               {/* Y-axis values */}
-              <SvgText x="55" y="30" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">High</SvgText>
-              <SvgText x="55" y="90" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">Medium</SvgText>
-              <SvgText x="55" y="155" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">Low</SvgText>
+              <SvgText x="55" y="30" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">{t('insights.long')}</SvgText>
+              <SvgText x="55" y="90" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">{t('insights.medium')}</SvgText>
+              <SvgText x="55" y="155" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">{t('insights.short')}</SvgText>
 
               {/* X-axis values */}
-              <SvgText x="90" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">Short</SvgText>
-              <SvgText x="160" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">Medium</SvgText>
-              <SvgText x="230" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">Long</SvgText>
+              <SvgText x="90" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">{t('insights.short')}</SvgText>
+              <SvgText x="160" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">{t('insights.medium')}</SvgText>
+              <SvgText x="230" y="175" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="middle">{t('insights.long')}</SvgText>
 
               {/* Stock Trading - volatile line */}
               <Path
@@ -126,49 +128,37 @@ export default function InsightsScreen() {
 
               {/* Legend */}
               <Circle cx="80" cy="195" r="5" fill={DesignColors.semantic.warning.main} />
-              <SvgText x="90" y="198" fill={DesignColors.neutral[600]} fontSize="10">Stock Trading</SvgText>
+              <SvgText x="90" y="198" fill={DesignColors.neutral[600]} fontSize="10">{t('insights.trading')}</SvgText>
               <Circle cx="170" cy="195" r="5" fill={DesignColors.secondary[400]} />
-              <SvgText x="180" y="198" fill={DesignColors.neutral[600]} fontSize="10">MF Investing</SvgText>
+              <SvgText x="180" y="198" fill={DesignColors.neutral[600]} fontSize="10">{t('insights.mfInvesting')}</SvgText>
             </Svg>
           </View>
 
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: DesignColors.semantic.warning.main }]} />
-              <Text style={styles.legendText}>Trading: High volatility, requires expertise</Text>
+              <Text style={styles.legendText}>{t('insights.legendTrading')}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: DesignColors.secondary[400] }]} />
-              <Text style={styles.legendText}>Investing: Steady growth over time</Text>
+              <Text style={styles.legendText}>{t('insights.legendInvesting')}</Text>
             </View>
           </View>
         </MLCard>
 
         {/* Common Mistakes */}
         <MLCard variant="outlined">
-          <Text style={styles.sectionTitle}>⚠️ Common Beginner Mistakes</Text>
+          <Text style={styles.sectionTitle}>{t('insights.mistakesTitle')}</Text>
 
           <View style={styles.mistakesList}>
-            <MistakeItem
-              number={1}
-              title="Treating trading like gambling"
-              description="Stock prices follow patterns based on company performance, not luck."
-            />
-            <MistakeItem
-              number={2}
-              title="Panic selling on small dips"
-              description="Short-term drops are normal. Focus on long-term trends."
-            />
-            <MistakeItem
-              number={3}
-              title="Following tips without research"
-              description="Always understand WHY a stock might be worth buying."
-            />
-            <MistakeItem
-              number={4}
-              title="Confusing trading with investing"
-              description="Day trading ≠ Long-term wealth building. Know the difference."
-            />
+            {(t('insights.mistakes') as unknown as any[]).map((mistake, i) => (
+              <MistakeItem
+                key={i}
+                number={i + 1}
+                title={mistake.title}
+                description={mistake.desc}
+              />
+            ))}
           </View>
         </MLCard>
 
@@ -176,15 +166,13 @@ export default function InsightsScreen() {
         <MLCard variant="learning" style={styles.recommendationCard}>
           <View style={styles.recommendationHeader}>
             <Text style={styles.recommendationIcon}>🎓</Text>
-            <Text style={styles.recommendationTitle}>Our Recommendation</Text>
+            <Text style={styles.recommendationTitle}>{t('insights.recTitle')}</Text>
           </View>
           <Text style={styles.recommendationText}>
-            For beginners, we recommend starting with Mutual Fund SIPs in the
-            <Text style={styles.highlightText}> Wealth Builder Lab</Text> module.
-            It's a safer way to build wealth over time without the stress of daily trading.
+            {t('insights.recText')}
           </Text>
           <MLButton
-            title="Explore Wealth Builder Lab"
+            title={t('insights.exploreRec')}
             variant="primary"
             size="medium"
             fullWidth
@@ -198,28 +186,16 @@ export default function InsightsScreen() {
 
         {/* Key Takeaways */}
         <View style={styles.takeawaysSection}>
-          <Text style={styles.sectionTitle}>💡 Key Takeaways</Text>
+          <Text style={styles.sectionTitle}>{t('insights.takeawaysTitle')}</Text>
 
-          <TakeawayItem
-            icon="📈"
-            title="Charts show history, not future"
-            description="Past performance doesn't guarantee future results."
-          />
-          <TakeawayItem
-            icon="⏰"
-            title="Time in market > Timing the market"
-            description="Long-term holding usually beats trying to pick perfect moments."
-          />
-          <TakeawayItem
-            icon="🎯"
-            title="Diversification reduces risk"
-            description="Don't put all eggs in one basket. Spread investments."
-          />
-          <TakeawayItem
-            icon="📚"
-            title="Keep learning"
-            description="The more you understand, the better decisions you'll make."
-          />
+          {(t('insights.takeaways') as unknown as any[]).map((tk, i) => (
+            <TakeawayItem
+              key={i}
+              icon={['📈', '⏰', '🎯', '📚'][i]}
+              title={tk.title}
+              description={tk.desc}
+            />
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

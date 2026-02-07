@@ -1,10 +1,3 @@
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * MARKET LAB - STOCK SELECTION SCREEN
- * Educational stock picker grouped by market cap
- * ═══════════════════════════════════════════════════════════════════════════
- */
-
 import {
   DesignColors,
   DesignRadius,
@@ -16,6 +9,7 @@ import {
   MLHeader,
   MLInfoBox,
 } from '@/components/design-system';
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -71,6 +65,7 @@ type StockCategory = 'largeCap' | 'midCap' | 'smallCap';
 
 export default function StockSelectionScreen() {
   const router = useRouter();
+  const { t } = useStockLanguage();
   const [selectedCategory, setSelectedCategory] = useState<StockCategory>('largeCap');
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
@@ -92,8 +87,8 @@ export default function StockSelectionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <MLHeader
-        title="Choose a Stock"
-        subtitle="Select one to practice"
+        title={t('selection.title')}
+        subtitle={t('selection.subtitle')}
         variant="default"
         onLeftAction={() => router.back()}
       />
@@ -103,8 +98,8 @@ export default function StockSelectionScreen() {
         <MLInfoBox
           variant="learn"
           icon="🎓"
-          title="Stock Categories"
-          message="Stocks are grouped by company size. Larger companies are usually more stable, smaller ones carry more risk."
+          title={t('selection.tip.title')}
+          message={t('selection.tip.message')}
         />
 
         {/* Category Tabs */}
@@ -127,7 +122,7 @@ export default function StockSelectionScreen() {
                 styles.categoryLabel,
                 selectedCategory === key && { color: data.riskColor },
               ]}>
-                {key === 'largeCap' ? 'Large' : key === 'midCap' ? 'Mid' : 'Small'}
+                {t(`selection.categories.${key}.label`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -136,14 +131,14 @@ export default function StockSelectionScreen() {
         {/* Category Header */}
         <View style={styles.categoryHeader}>
           <View style={styles.categoryTitleRow}>
-            <Text style={styles.categoryTitle}>{categoryData.title}</Text>
+            <Text style={styles.categoryTitle}>{t(`selection.categories.${selectedCategory}.title`)}</Text>
             <View style={[styles.riskBadge, { backgroundColor: `${categoryData.riskColor}20` }]}>
               <Text style={[styles.riskBadgeText, { color: categoryData.riskColor }]}>
-                {categoryData.riskLevel} Risk
+                {t(`selection.riskLevels.${categoryData.riskLevel.toLowerCase()}`)} {t('selection.risk')}
               </Text>
             </View>
           </View>
-          <Text style={styles.categorySubtitle}>{categoryData.subtitle}</Text>
+          <Text style={styles.categorySubtitle}>{t(`selection.categories.${selectedCategory}.subtitle`)}</Text>
         </View>
 
         {/* Stock List */}
@@ -155,17 +150,18 @@ export default function StockSelectionScreen() {
               isSelected={selectedStock === stock.symbol}
               riskColor={categoryData.riskColor}
               onPress={() => handleStockSelect(stock.symbol)}
+              t={t}
             />
           ))}
         </View>
 
         {/* Risk Explanation */}
         <MLCard variant="outlined" style={styles.riskCard}>
-          <Text style={styles.riskTitle}>Understanding Risk Levels</Text>
+          <Text style={styles.riskTitle}>{t('selection.understandRisk')}</Text>
           <View style={styles.riskExplanation}>
-            <RiskLevel color={DesignColors.secondary[500]} level="Low" desc="Price changes slowly, safer" />
-            <RiskLevel color={DesignColors.semantic.warning.main} level="Medium" desc="Moderate price swings" />
-            <RiskLevel color={DesignColors.semantic.negative.main} level="High" desc="Big ups and downs, risky" />
+            <RiskLevel color={DesignColors.secondary[500]} level={t('selection.riskLevels.low')} desc={t('selection.riskLevels.lowDesc')} />
+            <RiskLevel color={DesignColors.semantic.warning.main} level={t('selection.riskLevels.medium')} desc={t('selection.riskLevels.mediumDesc')} />
+            <RiskLevel color={DesignColors.semantic.negative.main} level={t('selection.riskLevels.high')} desc={t('selection.riskLevels.highDesc')} />
           </View>
         </MLCard>
       </ScrollView>
@@ -173,7 +169,7 @@ export default function StockSelectionScreen() {
       {/* Bottom Action */}
       <View style={styles.actionSection}>
         <MLButton
-          title={selectedStock ? `Practice with ${selectedStock}` : "Select a stock"}
+          title={selectedStock ? t('selection.practiceWith').replace('{stock}', selectedStock) : t('selection.selectStock')}
           variant="primary"
           size="large"
           fullWidth
@@ -191,9 +187,10 @@ interface StockCardProps {
   isSelected: boolean;
   riskColor: string;
   onPress: () => void;
+  t: (path: string) => string;
 }
 
-const StockCard: React.FC<StockCardProps> = ({ stock, isSelected, riskColor, onPress }) => {
+const StockCard: React.FC<StockCardProps> = ({ stock, isSelected, riskColor, onPress, t }) => {
   const volatilityColors: Record<string, string> = {
     Low: DesignColors.secondary[500],
     Medium: DesignColors.semantic.warning.main,
@@ -223,7 +220,7 @@ const StockCard: React.FC<StockCardProps> = ({ stock, isSelected, riskColor, onP
           <View style={styles.dotSeparator} />
           <View style={[styles.volatilityTag, { backgroundColor: `${volatilityColors[stock.volatility]}15` }]}>
             <Text style={[styles.volatilityText, { color: volatilityColors[stock.volatility] }]}>
-              {stock.volatility} Volatility
+              {t(`selection.riskLevels.${stock.volatility.toLowerCase()}`)} {t('selection.volatility')}
             </Text>
           </View>
         </View>

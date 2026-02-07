@@ -5,14 +5,15 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import { useStockLanguage } from '@/context/StockLanguageContext';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import {
   DesignColors,
   DesignRadius,
+  DesignShadows,
   DesignSpacing,
   DesignTextStyles,
-  DesignShadows,
 } from '../../constants/design-system';
 
 export type MLLearningCardType = 'lesson' | 'quiz' | 'concept' | 'comparison' | 'simulation';
@@ -42,7 +43,8 @@ export const MLLearningCard: React.FC<MLLearningCardProps> = ({
   onPress,
   style,
 }) => {
-  const typeStyles = getTypeStyles(type);
+  const { t } = useStockLanguage();
+  const typeStyles = getTypeStyles(type, t);
   const defaultIcons = {
     lesson: '📖',
     quiz: '❓',
@@ -75,7 +77,7 @@ export const MLLearningCard: React.FC<MLLearningCardProps> = ({
             {typeStyles.label}
           </Text>
           {duration && (
-            <Text style={styles.duration}>⏱ {duration}</Text>
+            <Text style={styles.duration}>⏱ {duration.replace('min', t('common.min'))}</Text>
           )}
         </View>
 
@@ -103,7 +105,7 @@ export const MLLearningCard: React.FC<MLLearningCardProps> = ({
         {isCompleted && (
           <View style={styles.completedBadge}>
             <Text style={styles.completedIcon}>✓</Text>
-            <Text style={styles.completedText}>Completed</Text>
+            <Text style={styles.completedText}>{t('common.completed')}</Text>
           </View>
         )}
       </View>
@@ -118,34 +120,34 @@ export const MLLearningCard: React.FC<MLLearningCardProps> = ({
   );
 };
 
-const getTypeStyles = (type: MLLearningCardType) => {
+const getTypeStyles = (type: MLLearningCardType, t: any) => {
   const types = {
     lesson: {
-      label: 'LESSON',
+      label: t('common.learning.lesson'),
       badgeColor: DesignColors.semantic.learning.light,
       labelColor: DesignColors.accent.purple,
       progressColor: DesignColors.accent.purple,
     },
     quiz: {
-      label: 'QUIZ',
+      label: t('common.learning.quiz'),
       badgeColor: DesignColors.semantic.info.light,
       labelColor: DesignColors.semantic.info.main,
       progressColor: DesignColors.semantic.info.main,
     },
     concept: {
-      label: 'CONCEPT',
+      label: t('common.learning.concept'),
       badgeColor: DesignColors.secondary[50],
       labelColor: DesignColors.secondary[500],
       progressColor: DesignColors.secondary[500],
     },
     comparison: {
-      label: 'COMPARE',
+      label: t('common.learning.compare'),
       badgeColor: DesignColors.semantic.warning.light,
       labelColor: DesignColors.semantic.warning.main,
       progressColor: DesignColors.semantic.warning.main,
     },
     simulation: {
-      label: 'SIMULATE',
+      label: t('common.learning.simulate'),
       badgeColor: DesignColors.primary[50],
       labelColor: DesignColors.primary[500],
       progressColor: DesignColors.primary[500],
