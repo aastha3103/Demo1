@@ -1,5 +1,7 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUser } from './UserContext';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -28,6 +30,7 @@ interface RewardContextType {
     vouchers: Voucher[];
     completeTask: (taskId: string) => void;
     redeemVoucher: (voucherId: string) => boolean;
+    isLoading: boolean;
 }
 
 const RewardContext = createContext<RewardContextType | undefined>(undefined);
@@ -85,8 +88,56 @@ export const RewardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [coins, setCoins] = useState(0);
     const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
     const [vouchers] = useState<Voucher[]>(INITIAL_VOUCHERS);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Simple persistence for session (can be improved with AsyncStorage if available)
+    const { user } = useUser();
+
+    // Load data when user changes
+    useEffect(() => {
+        if (user) {
+            loadRewardData(user.email);
+        }
+    }, [user]);
+
+    // Save data when coins or tasks change
+    useEffect(() => {
+        if (!isLoading && user) {
+            saveRewardData(user.email);
+        }
+    }, [coins, tasks, isLoading, user]);
+
+    const loadRewardData = async (email: string) => {
+        setIsLoading(true);
+        try {
+            const savedCoins = await AsyncStorage.getItem(`reward_coins_${email}`);
+            const savedTasks = await AsyncStorage.getItem(`reward_tasks_${email}`);
+
+            if (savedCoins !== null) {
+                setCoins(parseInt(savedCoins));
+            } else {
+                setCoins(0);
+            }
+            if (savedTasks !== null) {
+                setTasks(JSON.parse(savedTasks));
+            } else {
+                setTasks(INITIAL_TASKS);
+            }
+        } catch (error) {
+            console.error('Failed to load reward data', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const saveRewardData = async (email: string) => {
+        try {
+            await AsyncStorage.setItem(`reward_coins_${email}`, coins.toString());
+            await AsyncStorage.setItem(`reward_tasks_${email}`, JSON.stringify(tasks));
+        } catch (error) {
+            console.error('Failed to save reward data', error);
+        }
+    };
+
     const completeTask = (taskId: string) => {
         setTasks(prev => prev.map(task => {
             if (task.id === taskId && !task.completed) {
@@ -101,14 +152,13 @@ export const RewardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const voucher = vouchers.find(v => v.id === voucherId);
         if (voucher && coins >= voucher.cost) {
             setCoins(c => c - voucher.cost);
-            // In a real app, we'd add to "Redeemed" list
             return true;
         }
         return false;
     };
 
     return (
-        <RewardContext.Provider value={{ coins, tasks, vouchers, completeTask, redeemVoucher }}>
+        <RewardContext.Provider value={{ coins, tasks, vouchers, completeTask, redeemVoucher, isLoading }}>
             {children}
         </RewardContext.Provider>
     );

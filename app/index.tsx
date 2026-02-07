@@ -1,3 +1,4 @@
+import { useUser } from '@/context/UserContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,6 +10,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function FinCraftLanding() {
     const router = useRouter();
+    const { user } = useUser();
 
     return (
         <View style={styles.container}>
@@ -24,8 +26,8 @@ export default function FinCraftLanding() {
                         entering={FadeInDown.duration(1000).springify()}
                         style={styles.header}
                     >
+                        <Text style={styles.welcomeText}>Hello, {user?.name.split(' ')[0]}</Text>
                         <Text style={styles.title}>FinCraft</Text>
-                        <Text style={styles.tagline}>Empowering Your Financial Future</Text>
                     </Animated.View>
 
                     <Animated.View
@@ -165,17 +167,19 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'flex-start',
     },
+    welcomeText: {
+        fontSize: 16,
+        color: '#3b82f6',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+        marginBottom: 4,
+    },
     title: {
         fontSize: 42,
         fontWeight: '900',
         color: '#fff',
         letterSpacing: -1,
-    },
-    tagline: {
-        fontSize: 14,
-        color: '#94a3b8',
-        marginTop: 4,
-        fontWeight: '500',
     },
     rewardsEntry: {
         alignItems: 'flex-end',

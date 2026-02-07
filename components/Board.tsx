@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GAME_DATA_TRANSLATIONS } from '../constants/gameTranslations';
 import { Language, TRANSLATIONS } from '../constants/translations';
 import { useRewards } from '../context/RewardContext';
+import { useUser } from '../context/UserContext';
 import { BOARD_DATA } from '../game/board';
 import { CARD_CONFIG, CardAction } from '../game/CardConfig';
 import { Tile as TileType } from '../game/types';
@@ -98,12 +99,20 @@ export default function Board() {
     const [showCard, setShowCard] = useState(false);
     const [currentTile, setCurrentTile] = useState<TileType>(BOARD_DATA[0]);
 
-    // Setup State
-    const [setupStep, setSetupStep] = useState(0); // 0: Lang, 1: Players, 2: Ratio, 3: Playing
+    const [setupStep, setSetupStep] = useState(0); // 0: Lang, 1: Players, 2: Names, 3: Playing
     const [totalPlayers, setTotalPlayers] = useState(2);
     const [humanCount, setHumanCount] = useState(2);
     const [botCount, setBotCount] = useState(0);
+    const [playerNames, setPlayerNames] = useState<string[]>([]);
     const [botDifficulty, setBotDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
+    const { user } = useUser();
+
+    // Reset player names when profile changes
+    useEffect(() => {
+        if (user && playerNames.length === 0) {
+            setPlayerNames([user.name, 'Player 2', 'Player 3', 'Player 4']);
+        }
+    }, [user]);
 
     // Mini-Game State
     const [miniGameType, setMiniGameType] = useState<MiniGameType>('GENERIC');
@@ -884,52 +893,85 @@ export default function Board() {
             );
         }
 
-        return (
-            <View style={styles.setupContainer}>
-                <Text style={styles.setupTitle}>{t('setup', 'title')}</Text>
+        if (setupStep === 1) {
+            return (
+                <View style={styles.setupContainer}>
+                    <Text style={styles.setupTitle}>{t('setup', 'title')}</Text>
 
-                <Text style={styles.setupSubtitle}>{t('setup', 'totalPlayers')}</Text>
-                <View style={styles.setupGrid}>
-                    {[1, 2, 3, 4].map(n => (
-                        <TouchableOpacity
-                            key={n}
-                            style={[styles.setupOption, totalPlayers === n && styles.setupOptionActive]}
-                            onPress={() => {
-                                setTotalPlayers(n);
-                                if (botCount >= n) setBotCount(0);
-                            }}
-                        >
-                            <Text style={styles.setupOptionText}>{n}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    <Text style={styles.setupSubtitle}>{t('setup', 'totalPlayers')}</Text>
+                    <View style={styles.setupGrid}>
+                        {[1, 2, 3, 4].map(n => (
+                            <TouchableOpacity
+                                key={n}
+                                style={[styles.setupOption, totalPlayers === n && styles.setupOptionActive]}
+                                onPress={() => {
+                                    setTotalPlayers(n);
+                                    if (botCount >= n) setBotCount(0);
+                                }}
+                            >
+                                <Text style={styles.setupOptionText}>{n}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {totalPlayers > 0 && (
+                        <>
+                            <Text style={styles.setupSubtitle}>{t('setup', 'botCount')}</Text>
+                            <View style={styles.setupGrid}>
+                                {[...Array(totalPlayers + 1)].map((_, i) => (
+                                    <TouchableOpacity
+                                        key={i}
+                                        style={[styles.setupOption, botCount === i && styles.setupOptionActive]}
+                                        onPress={() => setBotCount(i)}
+                                    >
+                                        <Text style={styles.setupOptionText}>{i}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </>
+                    )}
+
+                    <TouchableOpacity
+                        style={[styles.setupButton, { marginTop: 30 }]}
+                        onPress={() => {
+                            if (totalPlayers === botCount && totalPlayers > 0) {
+                                Alert.alert("Error", "At least one player must be human!");
+                                return;
+                            }
+                            setSetupStep(2);
+                        }}
+                    >
+                        <Text style={styles.setupButtonText}>{t('setup', 'startButton')}</Text>
+                    </TouchableOpacity>
                 </View>
+            );
+        }
 
-                {totalPlayers > 0 && (
-                    <>
-                        <Text style={styles.setupSubtitle}>{t('setup', 'botCount')}</Text>
-                        <View style={styles.setupGrid}>
-                            {[...Array(totalPlayers + 1)].map((_, i) => (
-                                <TouchableOpacity
-                                    key={i}
-                                    style={[styles.setupOption, botCount === i && styles.setupOptionActive]}
-                                    onPress={() => setBotCount(i)}
-                                >
-                                    <Text style={styles.setupOptionText}>{i}</Text>
-                                </TouchableOpacity>
-                            ))}
+        const hCount = totalPlayers - botCount;
+        return (
+            <View style={[styles.setupContainer, { width: '90%' }]}>
+                <Text style={styles.setupTitle}>PLAYER NAMES</Text>
+                <ScrollView style={{ width: '100%' }}>
+                    {[...Array(hCount)].map((_, i) => (
+                        <View key={i} style={{ width: '100%', marginBottom: 10 }}>
+                            <Text style={styles.setupSubtitle}>PLAYER {i + 1} NAME</Text>
+                            <TextInput
+                                style={styles.setupInput}
+                                value={playerNames[i]}
+                                onChangeText={(val) => {
+                                    const newNames = [...playerNames];
+                                    newNames[i] = val;
+                                    setPlayerNames(newNames);
+                                }}
+                                placeholder={`Enter Name ${i + 1}`}
+                                placeholderTextColor="#475569"
+                            />
                         </View>
-                    </>
-                )}
-
+                    ))}
+                </ScrollView>
                 <TouchableOpacity
-                    style={[styles.setupButton, { marginTop: 30 }]}
-                    onPress={() => {
-                        if (totalPlayers === botCount && totalPlayers > 0) {
-                            Alert.alert("Error", "At least one player must be human!");
-                            return;
-                        }
-                        finalizeSetup();
-                    }}
+                    style={[styles.setupButton, { marginTop: 20 }]}
+                    onPress={() => finalizeSetup()}
                 >
                     <Text style={styles.setupButtonText}>{t('setup', 'startButton')}</Text>
                 </TouchableOpacity>
@@ -944,6 +986,7 @@ export default function Board() {
 
         for (let i = 0; i < hCount; i++) {
             const id = i;
+            const pName = playerNames[i] || `Human ${i + 1}`;
             const coords = getPlayerCoordinates(0);
             const offX = (id % 2 === 0) ? 4 : TILE_THICKNESS * 0.45;
             const offY = (id < 2) ? 4 : TILE_THICKNESS * 0.45;
@@ -951,7 +994,7 @@ export default function Board() {
             playerAnims[id] = new Animated.ValueXY({ x: coords.left + offX, y: coords.top + offY });
             playerScales[id] = new Animated.Value(1);
             initialPlayers.push({
-                id, name: `${t('setup', 'human')} ${i + 1}`, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: false, isOut: false, hearts: 5
+                id, name: pName, pos: 0, money: 5000, bankMoney: 0, salaryModifier: 0, inventory: [], badges: [], buffs: [], recurringExpenses: [], loans: [], socialCapital: 0, investmentFund: 0, rdActive: false, accumulatedSavings: 0, inflationIndex: 1.0, shgMember: false, roundCount: 1, flags: {}, color: colors[i], stats: { knowledge: 0, creditScore: 650, experience: 0, hasInsurance: false }, isBot: false, isOut: false, hearts: 5
             });
         }
         for (let i = hCount; i < totalPlayers; i++) {
@@ -967,14 +1010,14 @@ export default function Board() {
             });
         }
         setPlayers(initialPlayers);
-        setSetupStep(2);
+        setSetupStep(3);
         speak(t('ui', 'welcome'));
     };
 
     // Bot Logic
     useEffect(() => {
         let timer: any;
-        if (activePlayer?.isBot && !isRolling && !isMoving && !showCard && !hasRolled && setupStep === 2) {
+        if (activePlayer?.isBot && !isRolling && !isMoving && !showCard && !hasRolled && setupStep === 3) {
             timer = setTimeout(() => {
                 // Safeguard: Re-verify it's still a bot's turn before rolling
                 if (activePlayer?.isBot && !isRolling && !isMoving && !showCard && !hasRolled) {
@@ -1092,7 +1135,7 @@ export default function Board() {
         <Tile key={idx} tile={BOARD_DATA[idx]} width={w} height={h} left={left} top={top} focusLevel={focusedIndex === idx ? 2 : 1} />
     );
 
-    if (setupStep < 2) return <View style={styles.outerContainer}>{renderSetup()}</View>;
+    if (setupStep < 3) return <View style={styles.outerContainer}>{renderSetup()}</View>;
 
     return (
         <View style={styles.outerContainer}>
@@ -1310,6 +1353,16 @@ const styles = StyleSheet.create({
     setupOptionText: { color: '#fff' },
     setupButton: { padding: 15, backgroundColor: '#3b82f6', borderRadius: 12, width: 200, alignItems: 'center' },
     setupButtonText: { color: '#fff', fontWeight: 'bold' },
+    setupInput: {
+        backgroundColor: '#1e293b',
+        color: '#fff',
+        padding: 12,
+        borderRadius: 10,
+        width: '100%',
+        marginBottom: 5,
+        borderWidth: 1,
+        borderColor: '#334155'
+    },
     botThinkingContainer: { alignItems: 'center' },
     botThinkingIcon: { marginBottom: 15 },
     botTaskName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
