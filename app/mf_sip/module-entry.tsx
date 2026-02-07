@@ -238,10 +238,11 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   subtitle: {
     ...DesignTextStyles.titleMedium,
-    color: colors.neutral[700], // Increased contrast
+    color: colors.neutral[900], // Maximum contrast - dark text
     textAlign: 'center',
-    fontWeight: '500', // Increased weight
-    lineHeight: 26,
+    fontWeight: '700', // Bold weight for better visibility
+    fontSize: 18, // Ensure size is visible
+    lineHeight: 28,
   },
 
   // ─────────────────────────────────────────────────────────────────────────

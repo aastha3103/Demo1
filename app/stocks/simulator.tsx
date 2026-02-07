@@ -2,18 +2,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * MARKET LAB - STOCK TRADING SIMULATOR
  * Educational virtual trading with feedback
+ * GREEN-WHITE THEME - Clean, minimalistic, accessible for rural users
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import {
-  DesignColors,
-  DesignRadius,
-  DesignSpacing,
-  DesignTextStyles,
-  MLButton,
-  MLCard,
-  MLHeader
-} from '@/components/design-system';
 import { useStockLanguage } from '@/context/StockLanguageContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -21,13 +13,40 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useRewards } from '../../context/RewardContext';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GREEN-WHITE THEME COLORS
+// ═══════════════════════════════════════════════════════════════════════════
+const COLORS = {
+  green: {
+    50: '#f0fdf4',
+    100: '#dcfce7',
+    200: '#bbf7d0',
+    300: '#86efac',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#16a34a',
+    700: '#15803d',
+    800: '#166534',
+    900: '#14532d',
+  },
+  white: '#FFFFFF',
+  text: '#1F2937',
+  textLight: '#6B7280',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
+  purple: '#8B5CF6',
+  purpleLight: '#EDE9FE',
+};
 
 // Initial virtual wallet
 const INITIAL_BALANCE = 500000;
@@ -196,50 +215,78 @@ export default function SimulatorScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MLHeader
-        title={t('simulator.title')}
-        subtitle={t('simulator.subtitle')}
-        variant="default"
-        onLeftAction={() => router.back()}
-        rightIcon="📊"
-        onRightAction={() => router.push('/stocks/insights')}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+
+      {/* Header */}
+      <Animated.View
+        entering={FadeInDown.duration(400)}
+        style={styles.header}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{t('simulator.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('simulator.subtitle')}</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push('/stocks/insights')}
+          style={styles.insightsButton}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.insightsIcon}>📊</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Virtual Badge */}
-        <View style={styles.virtualBadge}>
+        <Animated.View
+          entering={FadeInUp.delay(100).duration(500)}
+          style={styles.virtualBadge}
+        >
+          <Text style={styles.virtualBadgeIcon}>🎮</Text>
           <Text style={styles.virtualBadgeText}>{t('simulator.virtualBadge')}</Text>
-        </View>
+        </Animated.View>
 
         {/* Portfolio Summary */}
-        <MLCard variant="glass">
+        <Animated.View
+          entering={FadeInUp.delay(200).duration(500)}
+          style={styles.portfolioCard}
+        >
           <View style={styles.portfolioHeader}>
             <Text style={styles.portfolioLabel}>{t('simulator.portfolioValue')}</Text>
             <Text style={styles.portfolioValue}>{formatCurrency(totalPortfolioValue)}</Text>
             <View style={[styles.pnlBadge, totalPnL >= 0 ? styles.pnlPositive : styles.pnlNegative]}>
-              <Text style={[styles.pnlText, { color: totalPnL >= 0 ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>
-                {totalPnL >= 0 ? '+' : ''}{formatCurrency(totalPnL)} ({((totalPnL / INITIAL_BALANCE) * 100).toFixed(2)}%)
+              <Text style={[styles.pnlText, { color: totalPnL >= 0 ? COLORS.green[700] : COLORS.danger }]}>
+                {totalPnL >= 0 ? '↑' : '↓'} {totalPnL >= 0 ? '+' : ''}{formatCurrency(totalPnL)} ({((totalPnL / INITIAL_BALANCE) * 100).toFixed(2)}%)
               </Text>
             </View>
           </View>
 
           <View style={styles.statsGrid}>
-            <StatItem label={t('simulator.cash')} value={formatCurrency(cash)} />
-            <StatItem label={t('simulator.holdingsValue')} value={formatCurrency(holding.quantity * currentPrice)} />
-            <StatItem label={t('simulator.realizedPnL')} value={formatCurrency(realizedPnL)} isProfit={realizedPnL >= 0} />
-            <StatItem label={t('simulator.unrealizedPnL')} value={formatCurrency(unrealizedPnL)} isProfit={unrealizedPnL >= 0} />
+            <StatItem label={t('simulator.cash')} value={formatCurrency(cash)} icon="💰" />
+            <StatItem label={t('simulator.holdingsValue')} value={formatCurrency(holding.quantity * currentPrice)} icon="📦" />
+            <StatItem label={t('simulator.realizedPnL')} value={formatCurrency(realizedPnL)} isProfit={realizedPnL >= 0} icon="✅" />
+            <StatItem label={t('simulator.unrealizedPnL')} value={formatCurrency(unrealizedPnL)} isProfit={unrealizedPnL >= 0} icon="⏳" />
           </View>
-        </MLCard>
+        </Animated.View>
 
         {/* Current Stock */}
-        <MLCard variant="elevated">
+        <Animated.View
+          entering={FadeInUp.delay(300).duration(500)}
+          style={styles.stockCard}
+        >
           <View style={styles.stockHeader}>
             <View>
               <Text style={styles.stockSymbol}>{stockSymbol}</Text>
               <Text style={styles.stockPrice}>{formatCurrency(currentPrice)}</Text>
             </View>
             <View style={[styles.changeBadge, priceChange >= 0 ? styles.changePositive : styles.changeNegative]}>
-              <Text style={[styles.changeText, { color: priceChange >= 0 ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>
+              <Text style={[styles.changeText, { color: priceChange >= 0 ? COLORS.green[700] : COLORS.danger }]}>
                 {priceChange >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(priceChange))} ({Math.abs(priceChangePercent).toFixed(2)}%)
               </Text>
             </View>
@@ -257,7 +304,7 @@ export default function SimulatorScreen() {
                     styles.chartBar,
                     {
                       height,
-                      backgroundColor: isLast ? DesignColors.primary[500] : (price >= priceHistory[Math.max(0, i - 1)] ? DesignColors.secondary[400] : DesignColors.semantic.negative.main),
+                      backgroundColor: isLast ? COLORS.green[600] : (price >= priceHistory[Math.max(0, i - 1)] ? COLORS.green[400] : COLORS.danger),
                       opacity: 0.4 + (i / priceHistory.length) * 0.6,
                     },
                   ]}
@@ -279,16 +326,23 @@ export default function SimulatorScreen() {
               </View>
             </View>
           )}
-        </MLCard>
+        </Animated.View>
 
         {/* Trade Actions */}
-        <MLCard variant="outlined">
+        <Animated.View
+          entering={FadeInUp.delay(400).duration(500)}
+          style={styles.tradeCard}
+        >
           <Text style={styles.tradeTitle}>{t('simulator.makeTrade')}</Text>
 
           <View style={styles.quantityRow}>
             <Text style={styles.quantityLabel}>{t('simulator.quantity')}:</Text>
             <View style={styles.quantityInput}>
-              <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(prev => String(Math.max(1, parseInt(prev) - 1)))}>
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => setQuantity(prev => String(Math.max(1, parseInt(prev) - 1)))}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.qtyBtnText}>−</Text>
               </TouchableOpacity>
               <TextInput
@@ -297,7 +351,11 @@ export default function SimulatorScreen() {
                 onChangeText={setQuantity}
                 keyboardType="numeric"
               />
-              <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(prev => String(parseInt(prev || '0') + 1))}>
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => setQuantity(prev => String(parseInt(prev || '0') + 1))}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.qtyBtnText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -309,52 +367,64 @@ export default function SimulatorScreen() {
           </View>
 
           <View style={styles.tradeButtons}>
-            <MLButton
-              title={t('simulator.buy')}
-              variant="success"
-              size="large"
+            <TouchableOpacity
+              style={[
+                styles.buyButton,
+                (parseInt(quantity) || 0) * currentPrice > cash && styles.buttonDisabled,
+              ]}
               onPress={handleBuy}
+              activeOpacity={0.8}
               disabled={(parseInt(quantity) || 0) * currentPrice > cash}
-              style={styles.tradeBtn}
-            />
-            <MLButton
-              title={t('simulator.sell')}
-              variant="danger"
-              size="large"
+            >
+              <Text style={styles.buyButtonText}>📈 {t('simulator.buy')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.sellButton,
+                (parseInt(quantity) || 0) > holding.quantity && styles.buttonDisabled,
+              ]}
               onPress={handleSell}
+              activeOpacity={0.8}
               disabled={(parseInt(quantity) || 0) > holding.quantity}
-              style={styles.tradeBtn}
-            />
+            >
+              <Text style={styles.sellButtonText}>📉 {t('simulator.sell')}</Text>
+            </TouchableOpacity>
           </View>
-        </MLCard>
+        </Animated.View>
 
         {/* Recent Trades */}
         {trades.length > 0 && (
-          <MLCard variant="outlined">
+          <Animated.View
+            entering={FadeInUp.delay(500).duration(500)}
+            style={styles.tradesCard}
+          >
             <Text style={styles.tradesTitle}>{t('simulator.recentTrades')}</Text>
             {trades.slice(-5).reverse().map((trade, i) => (
               <View key={i} style={styles.tradeItem}>
-                <View style={[styles.tradeBadge, { backgroundColor: trade.type === 'BUY' ? `${DesignColors.secondary[400]}20` : `${DesignColors.semantic.negative.main}20` }]}>
-                  <Text style={[styles.tradeType, { color: trade.type === 'BUY' ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>{trade.type}</Text>
+                <View style={[styles.tradeBadge, { backgroundColor: trade.type === 'BUY' ? COLORS.green[100] : COLORS.dangerLight }]}>
+                  <Text style={[styles.tradeType, { color: trade.type === 'BUY' ? COLORS.green[700] : COLORS.danger }]}>{trade.type}</Text>
                 </View>
                 <Text style={styles.tradeQty}>{trade.quantity} @ {formatCurrency(trade.price)}</Text>
                 {trade.pnl !== undefined && (
-                  <Text style={[styles.tradePnl, { color: trade.pnl >= 0 ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>
+                  <Text style={[styles.tradePnl, { color: trade.pnl >= 0 ? COLORS.green[700] : COLORS.danger }]}>
                     {trade.pnl >= 0 ? '+' : ''}{formatCurrency(trade.pnl)}
                   </Text>
                 )}
               </View>
             ))}
-          </MLCard>
+          </Animated.View>
         )}
 
         {/* Discipline Reminder */}
-        <View style={styles.reminder}>
+        <Animated.View
+          entering={FadeInUp.delay(600).duration(500)}
+          style={styles.reminder}
+        >
           <Text style={styles.reminderIcon}>🎓</Text>
           <Text style={styles.reminderText}>
             {t('simulator.reminder')}
           </Text>
-        </View>
+        </Animated.View>
       </ScrollView>
 
       {/* Educational Feedback Modal */}
@@ -364,7 +434,13 @@ export default function SimulatorScreen() {
             <Text style={styles.feedbackIcon}>{feedbackMessage.icon}</Text>
             <Text style={styles.feedbackTitle}>{feedbackMessage.title}</Text>
             <Text style={styles.feedbackMessage}>{feedbackMessage.message}</Text>
-            <MLButton title={t('common.gotIt')} variant="primary" size="medium" onPress={() => setShowFeedback(null)} />
+            <TouchableOpacity
+              style={styles.feedbackButton}
+              onPress={() => setShowFeedback(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.feedbackButtonText}>{t('common.gotIt')}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -373,81 +449,481 @@ export default function SimulatorScreen() {
 }
 
 // Stat Item Component
-const StatItem = ({ label, value, isProfit }: { label: string; value: string; isProfit?: boolean }) => (
+const StatItem = ({ label, value, isProfit, icon }: { label: string; value: string; isProfit?: boolean; icon: string }) => (
   <View style={styles.statItem}>
+    <Text style={styles.statIcon}>{icon}</Text>
     <Text style={styles.statLabel}>{label}</Text>
-    <Text style={[styles.statValue, isProfit !== undefined && { color: isProfit ? DesignColors.secondary[500] : DesignColors.semantic.negative.main }]}>{value}</Text>
+    <Text style={[styles.statValue, isProfit !== undefined && { color: isProfit ? COLORS.green[700] : COLORS.danger }]}>{value}</Text>
   </View>
 );
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STYLES - Green-White Theme
+// ═══════════════════════════════════════════════════════════════════════════
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: DesignColors.neutral[50] },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.white
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.green[100],
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.green[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  backArrow: {
+    color: COLORS.green[700],
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  headerCenter: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: COLORS.green[800],
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  headerSubtitle: {
+    color: COLORS.textLight,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  insightsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.green[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  insightsIcon: {
+    fontSize: 20,
+  },
+
+  // Scroll
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: DesignSpacing.screenPadding, paddingBottom: 100, gap: DesignSpacing.lg },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+    gap: 16
+  },
 
   // Virtual Badge
-  virtualBadge: { backgroundColor: DesignColors.semantic.learning.light, paddingVertical: DesignSpacing.sm, paddingHorizontal: DesignSpacing.lg, borderRadius: DesignRadius.round, alignSelf: 'center', marginTop: DesignSpacing.sm },
-  virtualBadgeText: { ...DesignTextStyles.labelSmall, color: DesignColors.accent.purple, fontWeight: '700' },
+  virtualBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.purpleLight,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  virtualBadgeIcon: {
+    fontSize: 16,
+  },
+  virtualBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.purple,
+  },
 
-  // Portfolio
-  portfolioHeader: { alignItems: 'center', marginBottom: DesignSpacing.lg },
-  portfolioLabel: { ...DesignTextStyles.labelMedium, color: DesignColors.neutral[500] },
-  portfolioValue: { ...DesignTextStyles.headlineLarge, color: DesignColors.neutral[900], marginTop: 4 },
-  pnlBadge: { paddingHorizontal: DesignSpacing.md, paddingVertical: DesignSpacing.xs, borderRadius: DesignRadius.round, marginTop: DesignSpacing.sm },
-  pnlPositive: { backgroundColor: `${DesignColors.secondary[400]}15` },
-  pnlNegative: { backgroundColor: `${DesignColors.semantic.negative.main}15` },
-  pnlText: { ...DesignTextStyles.labelSmall, fontWeight: '600' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  statItem: { width: '50%', paddingVertical: DesignSpacing.sm },
-  statLabel: { ...DesignTextStyles.caption, color: DesignColors.neutral[500] },
-  statValue: { ...DesignTextStyles.labelLarge, color: DesignColors.neutral[900], marginTop: 2 },
+  // Portfolio Card
+  portfolioCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+    shadowColor: COLORS.green[900],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  portfolioHeader: {
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  portfolioLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  portfolioValue: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: COLORS.green[800],
+    marginTop: 6,
+  },
+  pnlBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 10
+  },
+  pnlPositive: {
+    backgroundColor: COLORS.green[100]
+  },
+  pnlNegative: {
+    backgroundColor: COLORS.dangerLight
+  },
+  pnlText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap'
+  },
+  statItem: {
+    width: '50%',
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  statIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  statValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginTop: 4,
+  },
 
-  // Stock
-  stockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  stockSymbol: { ...DesignTextStyles.labelMedium, color: DesignColors.neutral[500] },
-  stockPrice: { ...DesignTextStyles.dataLarge, color: DesignColors.neutral[900], marginTop: 2 },
-  changeBadge: { paddingHorizontal: DesignSpacing.md, paddingVertical: DesignSpacing.xs, borderRadius: DesignRadius.round },
-  changePositive: { backgroundColor: `${DesignColors.secondary[400]}15` },
-  changeNegative: { backgroundColor: `${DesignColors.semantic.negative.main}15` },
-  changeText: { ...DesignTextStyles.labelSmall, fontWeight: '600' },
-  miniChart: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 60, marginTop: DesignSpacing.lg, paddingHorizontal: DesignSpacing.sm },
-  chartBar: { width: 8, borderRadius: 4 },
-  holdingInfo: { marginTop: DesignSpacing.lg, paddingTop: DesignSpacing.md, borderTopWidth: 1, borderTopColor: DesignColors.neutral[300] },
-  holdingRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: DesignSpacing.xs },
-  holdingLabel: { ...DesignTextStyles.bodySmall, color: DesignColors.neutral[500] },
-  holdingValue: { ...DesignTextStyles.labelMedium, color: DesignColors.neutral[900] },
+  // Stock Card
+  stockCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  stockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
+  },
+  stockSymbol: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textLight,
+    letterSpacing: 1,
+  },
+  stockPrice: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: COLORS.green[800],
+    marginTop: 4,
+  },
+  changeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16
+  },
+  changePositive: {
+    backgroundColor: COLORS.green[100]
+  },
+  changeNegative: {
+    backgroundColor: COLORS.dangerLight
+  },
+  changeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  miniChart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 60,
+    marginTop: 20,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.green[50],
+    borderRadius: 12,
+    paddingVertical: 8,
+  },
+  chartBar: {
+    width: 10,
+    borderRadius: 5
+  },
+  holdingInfo: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.green[100]
+  },
+  holdingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8
+  },
+  holdingLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.textLight,
+  },
+  holdingValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
 
-  // Trade
-  tradeTitle: { ...DesignTextStyles.titleSmall, color: DesignColors.neutral[900], marginBottom: DesignSpacing.md },
-  quantityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: DesignSpacing.md },
-  quantityLabel: { ...DesignTextStyles.labelMedium, color: DesignColors.neutral[700] },
-  quantityInput: { flexDirection: 'row', alignItems: 'center', backgroundColor: DesignColors.neutral[200], borderRadius: DesignRadius.md },
-  qtyBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  qtyBtnText: { fontSize: 20, color: DesignColors.neutral[700] },
-  qtyTextInput: { width: 60, textAlign: 'center', ...DesignTextStyles.labelLarge, color: DesignColors.neutral[900] },
-  tradePreview: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: DesignSpacing.lg },
-  previewLabel: { ...DesignTextStyles.bodyMedium, color: DesignColors.neutral[500] },
-  previewValue: { ...DesignTextStyles.labelLarge, color: DesignColors.neutral[900] },
-  tradeButtons: { flexDirection: 'row', gap: DesignSpacing.md },
-  tradeBtn: { flex: 1 },
+  // Trade Card
+  tradeCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  tradeTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginBottom: 16,
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16
+  },
+  quantityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  quantityInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.green[50],
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  qtyBtn: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  qtyBtnText: {
+    fontSize: 24,
+    color: COLORS.green[600],
+    fontWeight: '700',
+  },
+  qtyTextInput: {
+    width: 60,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  tradePreview: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.green[50],
+    borderRadius: 12,
+  },
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  previewValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.green[700],
+  },
+  tradeButtons: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  buyButton: {
+    flex: 1,
+    backgroundColor: COLORS.green[600],
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: COLORS.green[900],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buyButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  sellButton: {
+    flex: 1,
+    backgroundColor: COLORS.danger,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: COLORS.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sellButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
 
-  // Trades
-  tradesTitle: { ...DesignTextStyles.labelLarge, color: DesignColors.neutral[800], marginBottom: DesignSpacing.md },
-  tradeItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: DesignSpacing.sm, borderBottomWidth: 1, borderBottomColor: DesignColors.neutral[200] },
-  tradeBadge: { paddingHorizontal: DesignSpacing.sm, paddingVertical: 2, borderRadius: DesignRadius.xs, marginRight: DesignSpacing.md },
-  tradeType: { ...DesignTextStyles.labelSmall, fontWeight: '700' },
-  tradeQty: { ...DesignTextStyles.bodySmall, color: DesignColors.neutral[600], flex: 1 },
-  tradePnl: { ...DesignTextStyles.labelSmall },
+  // Trades Card
+  tradesCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  tradesTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  tradeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.green[100]
+  },
+  tradeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 12
+  },
+  tradeType: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  tradeQty: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.textLight,
+    flex: 1,
+  },
+  tradePnl: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
 
   // Reminder
-  reminder: { flexDirection: 'row', backgroundColor: DesignColors.primary[50], borderRadius: DesignRadius.lg, padding: DesignSpacing.lg, borderWidth: 1, borderColor: DesignColors.primary[200] },
-  reminderIcon: { fontSize: 24, marginRight: DesignSpacing.md },
-  reminderText: { ...DesignTextStyles.bodySmall, color: DesignColors.primary[600], flex: 1, lineHeight: 20 },
+  reminder: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.green[50],
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: COLORS.green[200]
+  },
+  reminderIcon: {
+    fontSize: 24,
+    marginRight: 14
+  },
+  reminderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.green[700],
+    flex: 1,
+    lineHeight: 20,
+  },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: DesignSpacing.screenPadding },
-  feedbackCard: { backgroundColor: DesignColors.neutral[100], borderRadius: DesignRadius.card, padding: DesignSpacing.xl, alignItems: 'center', width: '100%' },
-  feedbackIcon: { fontSize: 48, marginBottom: DesignSpacing.md },
-  feedbackTitle: { ...DesignTextStyles.titleLarge, color: DesignColors.neutral[900], marginBottom: DesignSpacing.sm, textAlign: 'center' },
-  feedbackMessage: { ...DesignTextStyles.bodyMedium, color: DesignColors.neutral[600], textAlign: 'center', marginBottom: DesignSpacing.xl, lineHeight: 24 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24
+  },
+  feedbackCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 3,
+    borderColor: COLORS.green[200],
+  },
+  feedbackIcon: {
+    fontSize: 64,
+    marginBottom: 16
+  },
+  feedbackTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.green[800],
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  feedbackMessage: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.textLight,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  feedbackButton: {
+    backgroundColor: COLORS.green[600],
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    shadowColor: COLORS.green[900],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  feedbackButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '800',
+  },
 });
+

@@ -1,17 +1,46 @@
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
  * MARKET LAB - EDUCATIONAL CHART COMPONENT
  * Interactive chart with learning overlays
+ * GREEN-WHITE THEME - Clean, minimalistic, accessible for rural users
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 import { useStockLanguage } from '@/context/StockLanguageContext';
 import React, { useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from 'react-native-svg';
-import { DesignColors, DesignRadius, DesignSpacing, DesignTextStyles } from '../../constants/design-system';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 48;
 const CHART_HEIGHT = 200;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GREEN-WHITE THEME COLORS
+// ═══════════════════════════════════════════════════════════════════════════
+const COLORS = {
+  green: {
+    50: '#f0fdf4',
+    100: '#dcfce7',
+    200: '#bbf7d0',
+    300: '#86efac',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#16a34a',
+    700: '#15803d',
+    800: '#166534',
+    900: '#14532d',
+  },
+  white: '#FFFFFF',
+  text: '#1F2937',
+  textLight: '#6B7280',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
+  purple: '#8B5CF6',
+  purpleLight: '#EDE9FE',
+};
 
 export type ChartTimeframe = '1D' | '1W' | '1M' | '6M';
 
@@ -68,9 +97,9 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
 
   const lessonsData = t('charts.component.lessons') as any[];
   const lessons = [
-    { ...lessonsData[0], color: DesignColors.secondary[400], start: upTrendStart, end: upTrendEnd },
-    { ...lessonsData[1], color: DesignColors.semantic.negative.main, start: downTrendStart, end: downTrendEnd },
-    { ...lessonsData[2], color: DesignColors.semantic.warning.main, start: volatileStart, end: volatileEnd },
+    { ...lessonsData[0], color: COLORS.green[500], start: upTrendStart, end: upTrendEnd },
+    { ...lessonsData[1], color: COLORS.danger, start: downTrendStart, end: downTrendEnd },
+    { ...lessonsData[2], color: COLORS.warning, start: volatileStart, end: volatileEnd },
   ];
 
   return (
@@ -84,8 +113,12 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
         <TouchableOpacity
           style={[styles.learningToggle, learningMode && styles.learningToggleActive]}
           onPress={() => setLearningMode(!learningMode)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.learningToggleText}>
+          <Text style={[styles.learningToggleIcon, learningMode && styles.learningToggleIconActive]}>
+            {learningMode ? '📚' : '📖'}
+          </Text>
+          <Text style={[styles.learningToggleText, learningMode && styles.learningToggleTextActive]}>
             {learningMode ? t('charts.component.learningOn') : t('charts.component.learningOff')}
           </Text>
         </TouchableOpacity>
@@ -98,6 +131,7 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
             key={tf}
             style={[styles.timeframeTab, timeframe === tf && styles.timeframeTabActive]}
             onPress={() => handleTimeframeChange(tf)}
+            activeOpacity={0.8}
           >
             <Text style={[styles.timeframeText, timeframe === tf && styles.timeframeTextActive]}>{tf}</Text>
           </TouchableOpacity>
@@ -109,22 +143,22 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT} viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
           <Defs>
             <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={DesignColors.secondary[400]} stopOpacity="0.3" />
-              <Stop offset="100%" stopColor={DesignColors.secondary[400]} stopOpacity="0" />
+              <Stop offset="0%" stopColor={COLORS.green[500]} stopOpacity="0.3" />
+              <Stop offset="100%" stopColor={COLORS.green[500]} stopOpacity="0" />
             </LinearGradient>
           </Defs>
 
           {/* Grid */}
           {[0, 1, 2, 3].map(i => (
             <Line key={i} x1="40" y1={30 + i * ((CHART_HEIGHT - 60) / 3)} x2={CHART_WIDTH - 20} y2={30 + i * ((CHART_HEIGHT - 60) / 3)}
-              stroke={DesignColors.chart.grid} strokeWidth="1" strokeDasharray="4" />
+              stroke={COLORS.green[200]} strokeWidth="1" strokeDasharray="4" />
           ))}
 
           {/* Y-axis labels */}
-          <SvgText x="35" y="35" fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">
+          <SvgText x="35" y="35" fill={COLORS.textLight} fontSize="10" textAnchor="end">
             ₹{maxPrice.toFixed(0)}
           </SvgText>
-          <SvgText x="35" y={CHART_HEIGHT - 25} fill={DesignColors.neutral[500]} fontSize="10" textAnchor="end">
+          <SvgText x="35" y={CHART_HEIGHT - 25} fill={COLORS.textLight} fontSize="10" textAnchor="end">
             ₹{minPrice.toFixed(0)}
           </SvgText>
 
@@ -138,8 +172,8 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
                 width={points[lessons[activeLesson].end].x - points[lessons[activeLesson].start].x + 10}
                 height={CHART_HEIGHT - 40}
                 fill={lessons[activeLesson].color}
-                opacity="0.1"
-                rx="4"
+                opacity="0.15"
+                rx="8"
               />
             </G>
           )}
@@ -148,13 +182,13 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
           <Path d={areaD} fill="url(#areaGrad)" />
 
           {/* Main line */}
-          <Path d={pathD} fill="none" stroke={DesignColors.secondary[400]} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <Path d={pathD} fill="none" stroke={COLORS.green[500]} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Data points */}
           {points.map((p, i) => (
             <Circle key={i} cx={p.x} cy={p.y} r={i === points.length - 1 ? 6 : 3}
-              fill={i === points.length - 1 ? DesignColors.secondary[400] : DesignColors.neutral[400]}
-              stroke={i === points.length - 1 ? DesignColors.neutral[100] : 'none'} strokeWidth="2" />
+              fill={i === points.length - 1 ? COLORS.green[500] : COLORS.green[300]}
+              stroke={i === points.length - 1 ? COLORS.white : 'none'} strokeWidth="2" />
           ))}
 
           {/* Learning annotations */}
@@ -176,11 +210,11 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
           )}
 
           {/* X-axis labels */}
-          <SvgText x="50" y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">{t('charts.component.start')}</SvgText>
-          <SvgText x={CHART_WIDTH / 2} y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">
+          <SvgText x="50" y={CHART_HEIGHT - 5} fill={COLORS.textLight} fontSize="9" textAnchor="middle">{t('charts.component.start')}</SvgText>
+          <SvgText x={CHART_WIDTH / 2} y={CHART_HEIGHT - 5} fill={COLORS.textLight} fontSize="9" textAnchor="middle">
             {timeframe === '1D' ? '12 PM' : timeframe === '1W' ? t('charts.component.labels.mid') : timeframe === '1M' ? t('charts.component.labels.m15') : t('charts.component.labels.m3')}
           </SvgText>
-          <SvgText x={CHART_WIDTH - 30} y={CHART_HEIGHT - 5} fill={DesignColors.neutral[500]} fontSize="9" textAnchor="middle">{t('charts.component.now')}</SvgText>
+          <SvgText x={CHART_WIDTH - 30} y={CHART_HEIGHT - 5} fill={COLORS.textLight} fontSize="9" textAnchor="middle">{t('charts.component.now')}</SvgText>
         </Svg>
       </View>
 
@@ -192,11 +226,19 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
             {lessons.map((lesson, i) => (
               <TouchableOpacity
                 key={i}
-                style={[styles.lessonTab, activeLesson === i && { borderColor: lesson.color, backgroundColor: `${lesson.color}15` }]}
+                style={[
+                  styles.lessonTab,
+                  activeLesson === i && {
+                    borderColor: lesson.color,
+                    backgroundColor: lesson.color === COLORS.green[500] ? COLORS.green[50] :
+                      lesson.color === COLORS.danger ? COLORS.dangerLight : COLORS.warningLight
+                  }
+                ]}
                 onPress={() => setActiveLesson(i)}
+                activeOpacity={0.8}
               >
                 <View style={[styles.lessonDot, { backgroundColor: lesson.color }]} />
-                <Text style={[styles.lessonTabText, activeLesson === i && { color: lesson.color }]}>{lesson.title}</Text>
+                <Text style={[styles.lessonTabText, activeLesson === i && { color: lesson.color, fontWeight: '700' }]}>{lesson.title}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -208,37 +250,52 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
 
             {/* Specific explanations */}
             {activeLesson === 0 && (
-              <View style={styles.explanationBox}>
+              <View style={[styles.explanationBox, { backgroundColor: COLORS.green[50], borderColor: COLORS.green[200] }]}>
                 <Text style={styles.explanationIcon}>📈</Text>
-                <Text style={styles.explanationText}>
-                  {t('charts.component.explanations.up')}
-                </Text>
+                <View style={styles.explanationContent}>
+                  <Text style={[styles.explanationLabel, { color: COLORS.green[700] }]}>Green movement = Price is going UP</Text>
+                  <Text style={styles.explanationText}>
+                    {t('charts.component.explanations.up')}
+                  </Text>
+                </View>
               </View>
             )}
             {activeLesson === 1 && (
-              <View style={styles.explanationBox}>
+              <View style={[styles.explanationBox, { backgroundColor: COLORS.dangerLight, borderColor: '#FECACA' }]}>
                 <Text style={styles.explanationIcon}>📉</Text>
-                <Text style={styles.explanationText}>
-                  {t('charts.component.explanations.down')}
-                </Text>
+                <View style={styles.explanationContent}>
+                  <Text style={[styles.explanationLabel, { color: COLORS.danger }]}>Red movement = Price is going DOWN</Text>
+                  <Text style={styles.explanationText}>
+                    {t('charts.component.explanations.down')}
+                  </Text>
+                </View>
               </View>
             )}
             {activeLesson === 2 && (
-              <View style={styles.explanationBox}>
+              <View style={[styles.explanationBox, { backgroundColor: COLORS.warningLight, borderColor: '#FDE68A' }]}>
                 <Text style={styles.explanationIcon}>⚡</Text>
-                <Text style={styles.explanationText}>
-                  {t('charts.component.explanations.volatile')}
-                </Text>
+                <View style={styles.explanationContent}>
+                  <Text style={[styles.explanationLabel, { color: COLORS.warning }]}>High movement = Very unstable</Text>
+                  <Text style={styles.explanationText}>
+                    {t('charts.component.explanations.volatile')}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
 
           {/* Why Prices Move */}
           <View style={styles.whyCard}>
-            <Text style={styles.whyTitle}>{t('charts.component.whyTitle')}</Text>
+            <View style={styles.whyHeader}>
+              <Text style={styles.whyIcon}>💡</Text>
+              <Text style={styles.whyTitle}>{t('charts.component.whyTitle')}</Text>
+            </View>
             <View style={styles.whyList}>
               {(t('charts.component.whyList') as string[]).map((item, i) => (
-                <Text key={i} style={styles.whyItem}>• {item}</Text>
+                <View key={i} style={styles.whyItemRow}>
+                  <View style={styles.whyBullet} />
+                  <Text style={styles.whyItem}>{item}</Text>
+                </View>
               ))}
             </View>
           </View>
@@ -248,66 +305,223 @@ export const MLEducationalChart: React.FC<MLEducationalChartProps> = ({ stockSym
   );
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STYLES - Green-White Theme
+// ═══════════════════════════════════════════════════════════════════════════
+
 const styles = StyleSheet.create({
-  container: { backgroundColor: DesignColors.neutral[100], borderRadius: DesignRadius.card, padding: DesignSpacing.lg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: DesignSpacing.md },
-  stockSymbol: { ...DesignTextStyles.labelMedium, color: DesignColors.neutral[500] },
-  currentPrice: { ...DesignTextStyles.dataLarge, color: DesignColors.neutral[900], marginTop: 2 },
-  learningToggle: {
-    paddingHorizontal: DesignSpacing.md,
-    paddingVertical: DesignSpacing.sm,
-    borderRadius: DesignRadius.round,
-    backgroundColor: DesignColors.neutral[200],
+  container: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
   },
-  learningToggleActive: { backgroundColor: DesignColors.semantic.learning.light },
-  learningToggleText: { ...DesignTextStyles.labelSmall, color: DesignColors.accent.purple },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16
+  },
+  stockSymbol: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textLight,
+    letterSpacing: 1,
+  },
+  currentPrice: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: COLORS.green[800],
+    marginTop: 4,
+  },
+  learningToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: COLORS.green[50],
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+    gap: 6,
+  },
+  learningToggleActive: {
+    backgroundColor: COLORS.green[100],
+    borderColor: COLORS.green[400],
+  },
+  learningToggleIcon: {
+    fontSize: 14,
+  },
+  learningToggleIconActive: {},
+  learningToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  learningToggleTextActive: {
+    color: COLORS.green[700],
+    fontWeight: '700',
+  },
 
   // Timeframe
-  timeframeTabs: { flexDirection: 'row', backgroundColor: DesignColors.neutral[200], borderRadius: DesignRadius.sm, padding: 4, marginBottom: DesignSpacing.md },
-  timeframeTab: { flex: 1, paddingVertical: DesignSpacing.sm, alignItems: 'center', borderRadius: DesignRadius.xs },
-  timeframeTabActive: { backgroundColor: DesignColors.primary[500] },
-  timeframeText: { ...DesignTextStyles.labelSmall, color: DesignColors.neutral[500] },
-  timeframeTextActive: { color: DesignColors.neutral[0], fontWeight: '600' },
+  timeframeTabs: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.green[50],
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16
+  },
+  timeframeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  timeframeTabActive: {
+    backgroundColor: COLORS.green[600],
+    shadowColor: COLORS.green[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  timeframeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  timeframeTextActive: {
+    color: COLORS.white,
+    fontWeight: '700'
+  },
 
   // Chart
-  chartContainer: { marginBottom: DesignSpacing.lg },
+  chartContainer: {
+    marginBottom: 16,
+    backgroundColor: COLORS.green[50],
+    borderRadius: 12,
+    padding: 8,
+  },
 
   // Lessons
-  lessonsContainer: { gap: DesignSpacing.md },
-  lessonTabs: { marginBottom: DesignSpacing.sm },
+  lessonsContainer: {
+    gap: 12
+  },
+  lessonTabs: {
+    marginBottom: 8
+  },
   lessonTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: DesignSpacing.md,
-    paddingVertical: DesignSpacing.sm,
-    borderRadius: DesignRadius.round,
-    backgroundColor: DesignColors.neutral[200],
-    marginRight: DesignSpacing.sm,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: COLORS.green[50],
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
   },
-  lessonDot: { width: 8, height: 8, borderRadius: 4, marginRight: DesignSpacing.xs },
-  lessonTabText: { ...DesignTextStyles.labelSmall, color: DesignColors.neutral[600] },
+  lessonDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8
+  },
+  lessonTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
   lessonCard: {
-    backgroundColor: DesignColors.neutral[200],
-    borderRadius: DesignRadius.md,
-    padding: DesignSpacing.lg,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
     borderLeftWidth: 4,
+    borderWidth: 2,
+    borderColor: COLORS.green[100],
   },
-  lessonTitle: { ...DesignTextStyles.titleSmall, marginBottom: DesignSpacing.xs },
-  lessonDesc: { ...DesignTextStyles.bodyMedium, color: DesignColors.neutral[600] },
+  lessonTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  lessonDesc: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.textLight,
+    lineHeight: 20,
+  },
   explanationBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: DesignColors.neutral[100],
-    borderRadius: DesignRadius.sm,
-    padding: DesignSpacing.md,
-    marginTop: DesignSpacing.md,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
   },
-  explanationIcon: { fontSize: 20, marginRight: DesignSpacing.sm },
-  explanationText: { ...DesignTextStyles.bodySmall, color: DesignColors.neutral[700], flex: 1, lineHeight: 20 },
-  whyCard: { backgroundColor: DesignColors.neutral[200], borderRadius: DesignRadius.md, padding: DesignSpacing.lg },
-  whyTitle: { ...DesignTextStyles.labelLarge, color: DesignColors.neutral[800], marginBottom: DesignSpacing.sm },
-  whyList: { gap: 4 },
-  whyItem: { ...DesignTextStyles.bodySmall, color: DesignColors.neutral[600] },
+  explanationIcon: {
+    fontSize: 24,
+    marginRight: 12
+  },
+  explanationContent: {
+    flex: 1,
+  },
+  explanationLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  explanationText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.text,
+    lineHeight: 18,
+  },
+
+  // Why Card
+  whyCard: {
+    backgroundColor: COLORS.green[50],
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: COLORS.green[200],
+  },
+  whyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  whyIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  whyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.green[800],
+  },
+  whyList: {
+    gap: 8
+  },
+  whyItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  whyBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.green[500],
+    marginRight: 10,
+  },
+  whyItem: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.text,
+    flex: 1,
+  },
 });
+
