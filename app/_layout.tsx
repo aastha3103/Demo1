@@ -17,6 +17,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="econ" />
             <Stack.Screen name="stocks" />
+            <Stack.Screen name="mf_sip" />
         </Stack>
     );
 }

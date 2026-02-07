@@ -85,6 +85,35 @@ export default function FinCraftLanding() {
                             </LinearGradient>
                         </TouchableOpacity>
                     </Animated.View>
+
+                    {/* Wealth Builder Lab (MF & SIP) Card */}
+                    <Animated.View
+                        entering={FadeInUp.delay(600).duration(1000).springify()}
+                        style={styles.cardWrapper}
+                    >
+                        <TouchableOpacity
+                            style={styles.card}
+                            activeOpacity={0.8}
+                            onPress={() => router.push('/mf_sip' as any)}
+                        >
+                            <LinearGradient
+                                colors={['rgba(245, 158, 11, 0.2)', 'rgba(217, 119, 6, 0.1)']}
+                                style={styles.cardGradient}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: '#d97706' }]}>
+                                    <Text style={styles.iconText}>🌱</Text>
+                                </View>
+                                <View style={styles.cardInfo}>
+                                    <Text style={styles.cardTitle}>Wealth Builder</Text>
+                                    <Text style={styles.cardDescription}>Master Mutual Funds & SIPs with zero risk.</Text>
+                                </View>
+                                <View style={styles.cardFooter}>
+                                    <Text style={styles.exploreText}>Start Growing</Text>
+                                    <Text style={styles.arrow}>→</Text>
+                                </View>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </Animated.View>
                 </View>
 
                 <Animated.View
